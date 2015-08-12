@@ -138,3 +138,5 @@
                ((cdr entry) record value)
                (error "No such assignable field of record." record field))))
        (alist-add! setter-table <pred> setter)))))
+
+;;; generic-ref-set.scm ends here
