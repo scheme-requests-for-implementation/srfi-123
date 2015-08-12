@@ -39,3 +39,9 @@ make them undesirable for the tightest of inner loops, but will surely
 be negligible in the general case.
 
 Using hashtables instead of alists might give a slight improvement.
+
+
+Acknowledgments
+---------------
+
+Idea by Jorgen Schäfer AKA "forcer".
