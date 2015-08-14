@@ -151,6 +151,11 @@ Implementation
 A reference implementation as a library is found in the version
 control repository of this SRFI.
 
+It might be desirable for Scheme systems to offer a more efficient
+`type-of` procedure than the one used in this implementation, which in
+the worst case consumes linear time with regard to the number of types
+(including every record type) within the system.
+
 
 Acknowledgments
 ---------------
