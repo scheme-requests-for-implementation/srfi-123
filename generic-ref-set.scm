@@ -17,11 +17,11 @@
 
 (import
  (rename (except (scheme base) set!)
-         (define-record-type _define-record-type))
+         (define-record-type %define-record-type))
  (scheme case-lambda)
  (r6rs hashtables)
  (srfi 1)
- (rename (srfi 17) (set! _set!)))
+ (rename (srfi 17) (set! %set!)))
 
 ;;; Helpers
 
@@ -56,7 +56,7 @@
 (define-syntax set!
   (syntax-rules ()
     ((set! <place> <expression>)
-     (_set! <place> <expression>))
+     (%set! <place> <expression>))
     ((set! <object> <field> <value>)
      (let* ((object <object>)
             (setter (lookup-setter object)))
@@ -107,7 +107,7 @@
   (syntax-rules ()
     ((_ <name> <constructor> <pred> <field> ...)
      (begin
-       (_define-record-type <name> <constructor> <pred> <field> ...)
+       (%define-record-type <name> <constructor> <pred> <field> ...)
        (push! type-list <pred>)
        (register-record-getter <pred> <field> ...)
        (register-record-setter <pred> <field> ...)))))
