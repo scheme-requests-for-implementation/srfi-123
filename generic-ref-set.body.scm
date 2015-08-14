@@ -112,7 +112,7 @@
          (let ((getter (or (ref getters field #f)
                            (error "No such field of record." record field))))
            (getter record field)))
-       (hashtable-set! getter-table <pred> getter)))))
+       (set! getter-table <pred> getter)))))
 
 (define-syntax register-record-setter
   (syntax-rules ()
@@ -132,6 +132,6 @@
                            (error "No such assignable field of record."
                                   record field))))
            (setter record value)))
-       (hashtable-set! setter-table <pred> setter)))))
+       (set! setter-table <pred> setter)))))
 
 ;;; generic-ref-set.body.scm ends here
