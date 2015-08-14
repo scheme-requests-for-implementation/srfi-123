@@ -15,14 +15,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(import
- (rename (except (scheme base) set!)
-         (define-record-type %define-record-type))
- (scheme case-lambda)
- (r6rs hashtables)
- (srfi 1)
- (rename (srfi 17) (set! %set!)))
-
 ;;; Helpers
 
 (define-syntax push!
@@ -143,4 +135,4 @@
                (error "No such assignable field of record." record field))))
        (alist-add! setter-table <pred> setter)))))
 
-;;; generic-ref-set.scm ends here
+;;; generic-ref-set.body.scm ends here
