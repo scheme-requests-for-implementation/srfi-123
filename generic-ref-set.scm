@@ -16,12 +16,12 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (import
- (rename (scheme base)
-         (set! _set!)
+ (rename (except (scheme base) set!)
          (define-record-type _define-record-type))
  (scheme case-lambda)
  (r6rs hashtables)
- (srfi 1))
+ (srfi 1)
+ (rename (srfi 17) (set! _set!)))
 
 ;;; Helpers
 
@@ -55,12 +55,14 @@
 
 (define-syntax set!
   (syntax-rules ()
-    ((set! <var> <val>)
-     (_set! <var> <val>))
+    ((set! <place> <expression>)
+     (_set! <place> <expression>))
     ((set! <object> <field> <value>)
      (let* ((object <object>)
             (setter (lookup-setter object)))
        (setter object <field> <value>)))))
+
+(set! (setter ref) (lambda (object field value) (set! object field value)))
 
 (define (lookup-getter object)
   (let ((entry (assv (type-of object) getter-table)))
