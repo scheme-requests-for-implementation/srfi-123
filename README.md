@@ -33,8 +33,9 @@ code-bases, and furthermore a programmer can always fall back to the
 type-specific accessor and modifier procedures in performance-critical
 sections of code.
 
-The operators are specified to work on bytevectors, hashtables, lists,
-strings, vectors, and all record types.  Some notes on specific types:
+The operators are specified to work on bytevectors, R6RS hashtables,
+lists, strings, vectors, and all record types.  Some notes on specific
+types:
 
 - For bytevectors, 8-bit unsigned integer operations are assumed.
   There is no obvious way to incorporate other bytevector operations
