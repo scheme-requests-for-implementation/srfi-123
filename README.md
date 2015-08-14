@@ -1,6 +1,12 @@
 Generic accessor and modifier operators
 =======================================
 
+Author
+------
+
+Taylan Ulrich Bayırlı/Kammer, taylanbayirli at Google Mail
+
+
 Abstract
 --------
 
