@@ -22,10 +22,12 @@
     ((_ <list-var> <x>)
      (set! <list-var> (cons <x> <list-var>)))))
 
-(define-syntax alist-add!
-  (syntax-rules ()
-    ((_ <alist-var> <key> <value>)
-     (push! <alist-var> (cons <key> <value>)))))
+(define (alist->hashtable alist)
+  (let ((table (make-eqv-hashtable 100)))
+    (for-each (lambda (entry)
+                (hashtable-set! table (car entry) (cdr entry)))
+              alist)
+    table))
 
 ;;; Main
 
@@ -57,16 +59,12 @@
 (set! (setter ref) (lambda (object field value) (set! object field value)))
 
 (define (lookup-getter object)
-  (let ((entry (assv (type-of object) getter-table)))
-    (if entry
-        (cdr entry)
-        (error "No generic getter for object's type." object))))
+  (or (hashtable-ref getter-table (type-of object) #f)
+      (error "No generic getter for object's type." object)))
 
 (define (lookup-setter object)
-  (let ((entry (assv (type-of object) setter-table)))
-    (if entry
-        (cdr entry)
-        (error "No generic setter for object's type." object))))
+  (or (hashtable-ref setter-table (type-of object) #f)
+      (error "No generic setter for object's type." object)))
 
 (define (sparse-type? object)
   (memv (type-of object) sparse-types))
@@ -75,18 +73,20 @@
   (find (lambda (pred) (pred object)) type-list))
 
 (define getter-table
-  (list (cons bytevector? bytevector-u8-ref)
-        (cons hashtable? hashtable-ref)
-        (cons pair? list-ref)
-        (cons string? string-ref)
-        (cons vector? vector-ref)))
+  (alist->hashtable
+   (list (cons bytevector? bytevector-u8-ref)
+         (cons hashtable? hashtable-ref)
+         (cons pair? list-ref)
+         (cons string? string-ref)
+         (cons vector? vector-ref))))
 
 (define setter-table
-  (list (cons bytevector? bytevector-u8-set!)
-        (cons hashtable? hashtable-set!)
-        (cons pair? list-set!)
-        (cons string? string-set!)
-        (cons vector? vector-set!)))
+  (alist->hashtable
+   (list (cons bytevector? bytevector-u8-set!)
+         (cons hashtable? hashtable-set!)
+         (cons pair? list-set!)
+         (cons string? string-set!)
+         (cons vector? vector-set!))))
 
 (define sparse-types
   (list hashtable?))
@@ -107,13 +107,12 @@
 (define-syntax register-record-getter
   (syntax-rules ()
     ((_ <pred> (<field> <getter> . <rest>) ...)
-     (let ((getters (list (cons '<field> <getter>) ...)))
+     (let ((getters (alist->hashtable (list (cons '<field> <getter>) ...))))
        (define (getter record field)
-         (let ((entry (assv field getters)))
-           (if entry
-               ((cdr entry) record)
-               (error "No such field of record." record field))))
-       (alist-add! getter-table <pred> getter)))))
+         (let ((getter (or (ref getters field #f)
+                           (error "No such field of record." record field))))
+           (getter record field)))
+       (hashtable-set! getter-table <pred> getter)))))
 
 (define-syntax register-record-setter
   (syntax-rules ()
@@ -127,12 +126,12 @@
     ((_ <setters> <pred> (<field> <getter> <setter>) . <rest>)
      (%register-record-setter ((<field> <setter>) . <setters>) <pred> . <rest>))
     ((_ ((<field> <setter>) ...) <pred>)
-     (let ((setters (list (cons '<field> <setter>) ...)))
+     (let ((setters (alist->hashtable (list (cons '<field> <setter>) ...))))
        (define (setter record field value)
-         (let ((entry (assv field setters)))
-           (if entry
-               ((cdr entry) record value)
-               (error "No such assignable field of record." record field))))
-       (alist-add! setter-table <pred> setter)))))
+         (let ((setter (or (ref setters field #f)
+                           (error "No such assignable field of record."
+                                  record field))))
+           (setter record value)))
+       (hashtable-set! setter-table <pred> setter)))))
 
 ;;; generic-ref-set.body.scm ends here
