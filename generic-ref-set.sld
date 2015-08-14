@@ -1,6 +1,6 @@
 (define-library (generic-ref-set)
   (export
-   ref set! define-record-type)
+   ref set! define-record-type (rename ref $bracket-apply$))
   (import
    (rename (except (scheme base) set!)
            (define-record-type %define-record-type))
