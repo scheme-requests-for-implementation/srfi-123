@@ -82,15 +82,17 @@
 
 (define getter-table
   (list (cons bytevector? bytevector-u8-ref)
+        (cons hashtable? hashtable-ref)
+        (cons pair? list-ref)
         (cons string? string-ref)
-        (cons vector? vector-ref)
-        (cons hashtable? hashtable-ref)))
+        (cons vector? vector-ref)))
 
 (define setter-table
   (list (cons bytevector? bytevector-u8-set!)
+        (cons hashtable? hashtable-set!)
+        (cons pair? list-set!)
         (cons string? string-set!)
-        (cons vector? vector-set!)
-        (cons hashtable? hashtable-set!)))
+        (cons vector? vector-set!)))
 
 (define sparse-types
   (list hashtable?))
