@@ -154,7 +154,10 @@ Returns the value for `field` in `object`.  If `object` is of a
 (e.g. a hashtable), and the requested field is empty, then the value
 of `default` is returned if given, and otherwise an error raised.  If
 `object` is not of a sparse type, then `default` is ignored and an
-error raised if object doesn't have a value for `field`.
+error raised if object doesn't have a value for `field`.  (This error
+will typically come from the underlying accessor procedure.)
+
+    (ref #(0 1 2) 3)  ;error: vector-ref: Index out of bounds.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
 vectors, and all record types.  Only hashtables are a sparse type.
