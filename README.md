@@ -49,19 +49,48 @@ types:
   single-byte operations in mind when using a generalized API on
   bytevectors.
 
-- For hashtables, the `ref` operator takes an additional `default`
-  argument akin to `hashtable-ref`.
+    ```
+    (define bv (bytevector 0 1 2 3))
+    (ref bv 2)  ;=> 2
+    (set! bv 2 5)
+    (ref bv 2)  ;=> 5
+    ```
+
+- For hashtables, the `ref` operator takes an optional `default`
+  argument whose semantics is akin to `hashtable-ref`.
+
+    ```
+    (define table (make-eqv-hashtable))
+    (ref table "foo" 'not-found)  ;=> not-found
+    (set! table "foo" "Foobar.")
+    (ref table "foo")  ;=> "Foobar."
+    (ref table "bar")  ;error: Object has no entry for field.
+    ```
 
 - Lists are supported by testing the given object for a pair.  Pairs
   themselves are senseless to support because `(set! pair car value)`
   contains the same number of words as `(set-car! pair value)`.  In
-  the `ref` equivalent, it contains one word more: `(ref pair car)`.
+  the `ref` equivalent, it even contains one word more:
+  `(ref pair car)` vs. `(car pair)`.
+
+    ```
+    (ref '(a b c . d) 2)  ;=> c
+    ```
 
 - For records, the accepted values for the `field` parameter are
   symbols corresponding to the record type's field names.  The
   overhead involved in looking up the correct accessor of modifier
   falls under the same rationale as other kinds of overhead involved
   with this SRFI.
+
+    ```
+    (define-record-type <foo> (make-foo a b) foo?
+      (a foo-a set-foo-a!)
+      (b foo-b))
+    (define foo (make-foo 0 1))
+    (ref foo 'a)  ;=> 0
+    (set! foo 'b 2)  ;error: No such assignable field of record.
+    ```
 
 Alists are unfortunately impossible to support due to the lack of a
 reliable `alist?` predicate.  (It's ambiguous in that every alist is
@@ -71,9 +100,10 @@ alist.)
 A `ref*` procedure taking an arbitrary number of `field` arguments and
 walking through several collections was considered, but deemed
 sub-optimal because it doesn't play well with collections that may
-have "empty" fields, and usually one doesn't walk through deep
-structures at once, and instead binds intermediate results to a
-variable.  Nevertheless, it is trivial to define if desired:
+have "empty" fields (e.g. hashtables), and usually one doesn't walk
+through deep structures at once, and instead binds intermediate
+results to a variable.  Nevertheless, it is trivial to define if
+desired:
 
     (define (ref* object field . fields)
       (if (null? fields)
@@ -92,6 +122,10 @@ SRFI-17.  The reference implementation extends the SRFI-17 `set!` and
 thus supports the functionality of both SRFI-17 and the one described
 here.
 
+    (set! (car foo) bar)  ;Sets foo's car to bar.
+    (set! (car foo) bar quux)  ;Sets the bar field of the object in
+                               ;foo's car to quux.
+
 Additionally, if SRFI-17 is supported, the `ref` procedure's "setter"
 may be defined as: `(lambda (object field value) (set! object field
 value))`.  This is uninteresting in its own right, but can yield an
@@ -100,6 +134,14 @@ SRFI-105 heavily, a programmer may define `$bracket-apply$` as a
 synonym to `ref`, define `:=` as a synonym to `set!`, and then use the
 following syntax: `{object[field] := value}`.
 
+    #!curly-infix
+    (import (rename (only (scheme base) set!) (set! :=)))
+    (define $bracket-apply$ ref)
+    (define vec (vector 0 1 2 3))
+    {vec[1] + vec[2]}  ;=> 3
+    {vec[2] := 4}
+    {vec[1] + vec[2]}  ;=> 5
+
 
 Specification
 -------------
@@ -107,19 +149,23 @@ Specification
 - `(ref object field)` (procedure)
 - `(ref object field default)`
 
-Returns the value for `field` in `object`.  If `object` is of a type
-whose fields can be "empty" or "unassigned" (e.g. a hashtable), then
-the value of `default` is returned if given, and otherwise an error
-raised.  If `object` is not of such a type, then `default` is ignored.
+Returns the value for `field` in `object`.  If `object` is of a
+"sparse" type, meaning its fields can be "empty" or "unassigned"
+(e.g. a hashtable), and the requested field is empty, then the value
+of `default` is returned if given, and otherwise an error raised.  If
+`object` is not of a sparse type, then `default` is ignored and an
+error raised if object doesn't have a value for `field`.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
-vectors, and all record types.
+vectors, and all record types.  Only hashtables are a sparse type.
+Implementations are encouraged to expand this list of types with any
+non-standard types they support.
 
 Valid types for `field` depend on the type of `object`.  For
 bytevectors, hashtables, strings, and vectors, refer to their
 respective `*-ref` procedures.  For pairs, refer to `list-ref`.  For
 records, symbols that correspond with the record type's field names
-are taken.
+are allowed.
 
 If SRFI-17 is supported, then the `ref` procedure has the following
 setter: `(lambda (object field value) (set! object field value))`
@@ -129,10 +175,12 @@ setter: `(lambda (object field value) (set! object field value))`
 Sets the value for `field` in `object` to `value`.
 
 Valid types for `object` and `field` are the same as in the `ref`
-procedure.
+procedure.  Valid types for `value` are whatever values `object` may
+hold in `field`.
 
 Note: This operator is only a syntax keyword because it overloads the
-normal `set!` syntax.
+normal `set!` syntax.  An equivalent procedure is trivial to define:
+`(lambda (object field value) (set! object field value))`.
 
 
 Considerations when using as a library
