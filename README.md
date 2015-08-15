@@ -149,15 +149,26 @@ Specification
 - `(ref object field)` (procedure)
 - `(ref object field default)`
 
-Returns the value for `field` in `object`.  If `object` is of a
-"sparse" type, meaning its fields can be "empty" or "unassigned"
-(e.g. a hashtable), and the requested field is empty, then the value
-of `default` is returned if given, and otherwise an error raised.  If
-`object` is not of a sparse type, then `default` is ignored and an
-error raised if object doesn't have a value for `field`.  (This error
-will typically come from the underlying accessor procedure.)
+Returns the value for `field` in `object`.  An error is raised if
+`object` has no field identified by `field`.  (This error will often
+come from the underlying accessor procedure.)
 
     (ref #(0 1 2) 3)  ;error: vector-ref: Index out of bounds.
+
+If `object` is of a "sparse" type, meaning its fields can be "empty"
+or "unassigned" (e.g. a hashtable), and the requested field is empty,
+then the value of `default` is returned if given, and otherwise an
+error raised.
+
+    (ref hashtable unassigned-key 'default)  ;=> default
+    (ref hashtable unassigned-key)  ;error
+
+If `object` is not of a sparse type, then passing `default` is an
+error.
+
+    (ref '(0 1 2) 3 'default)  ;error: list-ref: Too many arguments.
+                               ;Unless the implementation's list-ref
+                               ;does something else.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
 vectors, and all record types.  Only hashtables are a sparse type.
