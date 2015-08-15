@@ -7,6 +7,23 @@ Author
 Taylan Ulrich Bayırlı/Kammer, taylanbayirli at Google Mail
 
 
+Status
+------
+
+This SRFI is currently in <em>draft</em> status.  Here is
+[an explanation](http://srfi.schemers.org/srfi-process.html) of each
+status that a SRFI can hold.  To provide input on this SRFI, please
+send email to <code><a href="mailto:srfi minus 123 at srfi dot
+schemers dot org">srfi-123@<span
+class="antispam">nospam</span>srfi.schemers.org</a></code>.  To
+subscribe to the list, follow
+[these instructions](http://srfi.schemers.org/srfi-list-subscribe.html).
+You can access previous messages via the mailing list
+[archive](http://srfi-email.schemers.org/srfi-123).
+  
+  - Received: 2015/8/14
+  - Draft #1 published: 2015/8/15
+
 Abstract
 --------
 

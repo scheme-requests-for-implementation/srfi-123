@@ -6,11 +6,20 @@
   <meta name="generator" content="pandoc" />
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="http://srfi.schemers.org/srfi.css" type="text/css" />
 </head>
 <body>
 <h1 id="generic-accessor-and-modifier-operators">Generic accessor and modifier operators</h1>
 <h2 id="author">Author</h2>
 <p>Taylan Ulrich Bayırlı/Kammer, taylanbayirli at Google Mail</p>
+<h2 id="status">Status</h2>
+<p>This SRFI is currently in <em>draft</em> status. Here is <a href="http://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold. To provide input on this SRFI, please send email to <code><a href="mailto:srfi minus 123 at srfi dot
+schemers dot org">srfi-123@<span
+class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the list, follow <a href="http://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>. You can access previous messages via the mailing list <a href="http://srfi-email.schemers.org/srfi-123">archive</a>.</p>
+<ul>
+<li>Received: 2015/8/14</li>
+<li>Draft #1 published: 2015/8/15</li>
+</ul>
 <h2 id="abstract">Abstract</h2>
 <p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary &quot;collection&quot; objects. We fill this gap for Scheme by defining generalized <code>ref</code> and <code>set!</code> operators.</p>
 <h2 id="rationale">Rationale</h2>
