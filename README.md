@@ -110,7 +110,7 @@ Specification
 Returns the value for `field` in `object`.  If `object` is of a type
 whose fields can be "empty" or "unassigned" (e.g. a hashtable), then
 the value of `default` is returned if given, and otherwise an error
-raised.
+raised.  If `object` is not of such a type, then `default` is ignored.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
 vectors, and all record types.
