@@ -1,181 +1,94 @@
-<h1>Generic accessor and modifier operators</h1>
-
-<h2>Author</h2>
-
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<h1 id="generic-accessor-and-modifier-operators">Generic accessor and modifier operators</h1>
+<h2 id="author">Author</h2>
 <p>Taylan Ulrich Bayırlı/Kammer, taylanbayirli at Google Mail</p>
-
-<h2>Abstract</h2>
-
-<p>Lisp dialects including Scheme have traditionally lacked short,
-simple, generic syntax for accessing and modifying the fields of
-arbitrary "collection" objects.  We fill this gap for Scheme by
-defining generalized <code>ref</code> and <code>set!</code> operators.</p>
-
-<h2>Rationale</h2>
-
-<p>In some types of code-bases, accessing and modifying fields of certain
-collection objects (such as vectors, hashtables, or records) are
-ubiquitous operations.  Standard Scheme APIs contain verbose procedure
-names specialized for each data type, which may become very tedious to
-type, and clutter the code.</p>
-
-<p>In contrast, most other languages offer very short and simple syntax
-for such operations, such as square bracket and dotted notation:
-<code>object[field]</code> and <code>object.field</code> for access; <code>object[field] = value</code>
-and <code>object.field = value</code> for modification.</p>
-
-<p>To accommodate, we define a pair of generic accessor and modifier
-operators that work through type-based dynamic dispatch: <code>(ref object
-field)</code> for access and <code>(set! object field value)</code> for modification.</p>
-
-<p>We believe the overhead involved in this is negligible in most
-code-bases, and furthermore a programmer can always fall back to the
-type-specific accessor and modifier procedures in performance-critical
-sections of code.</p>
-
-<p>The operators are specified to work on bytevectors, R6RS hashtables,
-lists, strings, vectors, and all record types.  Some notes on specific
-types:</p>
-
+<h2 id="abstract">Abstract</h2>
+<p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary &quot;collection&quot; objects. We fill this gap for Scheme by defining generalized <code>ref</code> and <code>set!</code> operators.</p>
+<h2 id="rationale">Rationale</h2>
+<p>In some types of code-bases, accessing and modifying fields of certain collection objects (such as vectors, hashtables, or records) are ubiquitous operations. Standard Scheme APIs contain verbose procedure names specialized for each data type, which may become very tedious to type, and clutter the code.</p>
+<p>In contrast, most other languages offer very short and simple syntax for such operations, such as square bracket and dotted notation: <code>object[field]</code> and <code>object.field</code> for access; <code>object[field] = value</code> and <code>object.field = value</code> for modification.</p>
+<p>To accommodate, we define a pair of generic accessor and modifier operators that work through type-based dynamic dispatch: <code>(ref object field)</code> for access and <code>(set! object field value)</code> for modification.</p>
+<p>We believe the overhead involved in this is negligible in most code-bases, and furthermore a programmer can always fall back to the type-specific accessor and modifier procedures in performance-critical sections of code.</p>
+<p>The operators are specified to work on bytevectors, R6RS hashtables, lists, strings, vectors, and all record types. Some notes on specific types:</p>
 <ul>
-<li><p>For bytevectors, 8-bit unsigned integer operations are assumed.
-There is no obvious way to incorporate other bytevector operations
-into the generalized API, and a programmer is most likely to have
-single-byte operations in mind when using a generalized API on
-bytevectors.</p></li>
-<li><p>For hashtables, the <code>ref</code> operator takes an additional <code>default</code>
-argument akin to <code>hashtable-ref</code>.</p></li>
-<li><p>Lists are supported by testing the given object for a pair.  Pairs
-themselves are senseless to support because <code>(set! pair car value)</code>
-contains the same number of words as <code>(set-car! pair value)</code>.  In
-the <code>ref</code> equivalent, it contains one word more: <code>(ref pair car)</code>.</p></li>
-<li><p>For records, the accepted values for the <code>field</code> parameter are
-symbols corresponding to the record type's field names.  The
-overhead involved in looking up the correct accessor of modifier
-falls under the same rationale as other kinds of overhead involved
-with this SRFI.</p></li>
+<li><p>For bytevectors, 8-bit unsigned integer operations are assumed. There is no obvious way to incorporate other bytevector operations into the generalized API, and a programmer is most likely to have single-byte operations in mind when using a generalized API on bytevectors.</p>
+<pre><code>(define bv (bytevector 0 1 2 3))
+(ref bv 2)  ;=&gt; 2
+(set! bv 2 5)
+(ref bv 2)  ;=&gt; 5</code></pre></li>
+<li><p>For hashtables, the <code>ref</code> operator takes an optional <code>default</code> argument whose semantics is akin to <code>hashtable-ref</code>.</p>
+<pre><code>(define table (make-eqv-hashtable))
+(ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
+(set! table &quot;foo&quot; &quot;Foobar.&quot;)
+(ref table &quot;foo&quot;)  ;=&gt; &quot;Foobar.&quot;
+(ref table &quot;bar&quot;)  ;error: Object has no entry for field.</code></pre></li>
+<li><p>Lists are supported by testing the given object for a pair. Pairs themselves are senseless to support because <code>(set! pair car value)</code> contains the same number of words as <code>(set-car! pair value)</code>. In the <code>ref</code> equivalent, it even contains one word more: <code>(ref pair car)</code> vs. <code>(car pair)</code>.</p>
+<pre><code>(ref &#39;(a b c . d) 2)  ;=&gt; c</code></pre></li>
+<li><p>For records, the accepted values for the <code>field</code> parameter are symbols corresponding to the record type's field names. The overhead involved in looking up the correct accessor of modifier falls under the same rationale as other kinds of overhead involved with this SRFI.</p>
+<pre><code>(define-record-type &lt;foo&gt; (make-foo a b) foo?
+  (a foo-a set-foo-a!)
+  (b foo-b))
+(define foo (make-foo 0 1))
+(ref foo &#39;a)  ;=&gt; 0
+(set! foo &#39;b 2)  ;error: No such assignable field of record.</code></pre></li>
 </ul>
-
-<p>Alists are unfortunately impossible to support due to the lack of a
-reliable <code>alist?</code> predicate.  (It's ambiguous in that every alist is
-also a list, and any list may coincidentally have the structure of an
-alist.)</p>
-
-<p>A <code>ref*</code> procedure taking an arbitrary number of <code>field</code> arguments and
-walking through several collections was considered, but deemed
-sub-optimal because it doesn't play well with collections that may
-have "empty" fields, and usually one doesn't walk through deep
-structures at once, and instead binds intermediate results to a
-variable.  Nevertheless, it is trivial to define if desired:</p>
-
+<p>Alists are unfortunately impossible to support due to the lack of a reliable <code>alist?</code> predicate. (It's ambiguous in that every alist is also a list, and any list may coincidentally have the structure of an alist.)</p>
+<p>A <code>ref*</code> procedure taking an arbitrary number of <code>field</code> arguments and walking through several collections was considered, but deemed sub-optimal because it doesn't play well with collections that may have &quot;empty&quot; fields (e.g. hashtables), and usually one doesn't walk through deep structures at once, and instead binds intermediate results to a variable. Nevertheless, it is trivial to define if desired:</p>
 <pre><code>(define (ref* object field . fields)
   (if (null? fields)
       (ref object field)
-      (apply ref* (ref object field) fields)
-</code></pre>
-
-<p>This might be a better candidate for SRFI-105's <code>$bracket-apply$</code> than
-regular <code>ref</code>.</p>
-
-<h2>Integration with SRFI-17 and SRFI-105</h2>
-
-<p>The <code>set!</code> operator in this SRFI does not conflict with the one in
-SRFI-17.  The reference implementation extends the SRFI-17 <code>set!</code> and
-thus supports the functionality of both SRFI-17 and the one described
-here.</p>
-
-<p>Additionally, if SRFI-17 is supported, the <code>ref</code> procedure's "setter"
-may be defined as: <code>(lambda (object field value) (set! object field
-value))</code>.  This is uninteresting in its own right, but can yield an
-interesting combination with SRFI-105.  In code that already uses
-SRFI-105 heavily, a programmer may define <code>$bracket-apply$</code> as a
-synonym to <code>ref</code>, define <code>:=</code> as a synonym to <code>set!</code>, and then use the
-following syntax: <code>{object[field] := value}</code>.</p>
-
-<h2>Specification</h2>
-
+      (apply ref* (ref object field) fields)</code></pre>
+<p>This might be a better candidate for SRFI-105's <code>$bracket-apply$</code> than regular <code>ref</code>.</p>
+<h2 id="integration-with-srfi-17-and-srfi-105">Integration with SRFI-17 and SRFI-105</h2>
+<p>The <code>set!</code> operator in this SRFI does not conflict with the one in SRFI-17. The reference implementation extends the SRFI-17 <code>set!</code> and thus supports the functionality of both SRFI-17 and the one described here.</p>
+<pre><code>(set! (car foo) bar)  ;Sets foo&#39;s car to bar.
+(set! (car foo) bar quux)  ;Sets the bar field of the object in
+                           ;foo&#39;s car to quux.</code></pre>
+<p>Additionally, if SRFI-17 is supported, the <code>ref</code> procedure's &quot;setter&quot; may be defined as: <code>(lambda (object field value) (set! object field value))</code>. This is uninteresting in its own right, but can yield an interesting combination with SRFI-105. In code that already uses SRFI-105 heavily, a programmer may define <code>$bracket-apply$</code> as a synonym to <code>ref</code>, define <code>:=</code> as a synonym to <code>set!</code>, and then use the following syntax: <code>{object[field] := value}</code>.</p>
+<pre><code>#!curly-infix
+(import (rename (only (scheme base) set!) (set! :=)))
+(define $bracket-apply$ ref)
+(define vec (vector 0 1 2 3))
+{vec[1] + vec[2]}  ;=&gt; 3
+{vec[2] := 4}
+{vec[1] + vec[2]}  ;=&gt; 5</code></pre>
+<h2 id="specification">Specification</h2>
 <ul>
 <li><code>(ref object field)</code> (procedure)</li>
 <li><code>(ref object field default)</code></li>
 </ul>
-
-<p>Returns the value for <code>field</code> in <code>object</code>.  If <code>object</code> is of a type
-whose fields can be "empty" or "unassigned" (e.g. a hashtable), then
-the value of <code>default</code> is returned if given, and otherwise an error
-raised.</p>
-
-<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings,
-vectors, and all record types.</p>
-
-<p>Valid types for <code>field</code> depend on the type of <code>object</code>.  For
-bytevectors, hashtables, strings, and vectors, refer to their
-respective <code>*-ref</code> procedures.  For pairs, refer to <code>list-ref</code>.  For
-records, symbols that correspond with the record type's field names
-are taken.</p>
-
-<p>If SRFI-17 is supported, then the <code>ref</code> procedure has the following
-setter: <code>(lambda (object field value) (set! object field value))</code></p>
-
+<p>Returns the value for <code>field</code> in <code>object</code>. If <code>object</code> is of a &quot;sparse&quot; type, meaning its fields can be &quot;empty&quot; or &quot;unassigned&quot; (e.g. a hashtable), and the requested field is empty, then the value of <code>default</code> is returned if given, and otherwise an error raised. If <code>object</code> is not of a sparse type, then <code>default</code> is ignored and an error raised if object doesn't have a value for <code>field</code>.</p>
+<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, and all record types. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any non-standard types they support.</p>
+<p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, and vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
+<p>If SRFI-17 is supported, then the <code>ref</code> procedure has the following setter: <code>(lambda (object field value) (set! object field value))</code></p>
 <ul>
 <li><code>(set! object field value)</code> (syntax)</li>
 </ul>
-
 <p>Sets the value for <code>field</code> in <code>object</code> to <code>value</code>.</p>
-
-<p>Valid types for <code>object</code> and <code>field</code> are the same as in the <code>ref</code>
-procedure.</p>
-
-<p>Note: This operator is only a syntax keyword because it overloads the
-normal <code>set!</code> syntax.</p>
-
-<h2>Considerations when using as a library</h2>
-
-<p>The intent of this SRFI is to encourage Scheme systems to extend the
-semantics of their default <code>set!</code> operator in line with this SRFI.  On
-the meanwhile, it can be used as a library, but certain considerations
-apply.</p>
-
-<p>The <code>set!</code> and <code>define-record-type</code> exports of the library conflict
-with the ones in <code>(scheme base)</code>, so either have to be renamed, or
-more typically, the ones from <code>(scheme base)</code> excluded.</p>
-
-<p>Record types not defined with the <code>default-record-type</code> exported by
-this library won't work with <code>ref</code> and <code>set!</code>.</p>
-
-<h2>Implementation</h2>
-
-<p>A reference implementation as a library is found in the version
-control repository of this SRFI.</p>
-
-<p>It might be desirable for Scheme systems to offer a more efficient
-<code>type-of</code> procedure than the one used in this implementation, which in
-the worst case consumes linear time with regard to the number of types
-(including every record type) within the system, albeit with a very
-small constant factor: one call to each type predicate.</p>
-
-<h2>Acknowledgments</h2>
-
+<p>Valid types for <code>object</code> and <code>field</code> are the same as in the <code>ref</code> procedure. Valid types for <code>value</code> are whatever values <code>object</code> may hold in <code>field</code>.</p>
+<p>Note: This operator is only a syntax keyword because it overloads the normal <code>set!</code> syntax. An equivalent procedure is trivial to define: <code>(lambda (object field value) (set! object field value))</code>.</p>
+<h2 id="considerations-when-using-as-a-library">Considerations when using as a library</h2>
+<p>The intent of this SRFI is to encourage Scheme systems to extend the semantics of their default <code>set!</code> operator in line with this SRFI. On the meanwhile, it can be used as a library, but certain considerations apply.</p>
+<p>The <code>set!</code> and <code>define-record-type</code> exports of the library conflict with the ones in <code>(scheme base)</code>, so either have to be renamed, or more typically, the ones from <code>(scheme base)</code> excluded.</p>
+<p>Record types not defined with the <code>define-record-type</code> exported by this library won't work with <code>ref</code> and <code>set!</code>.</p>
+<h2 id="implementation">Implementation</h2>
+<p>A reference implementation as a library is found in the version control repository of this SRFI.</p>
+<p>It might be desirable for Scheme systems to offer a more efficient <code>type-of</code> procedure than the one used in this implementation, which in the worst case consumes linear time with regard to the number of types (including every record type) within the system, albeit with a very small constant factor: one call to each type predicate.</p>
+<h2 id="acknowledgments">Acknowledgments</h2>
 <p>Original idea and some input during design by Jorgen Schäfer.</p>
-
-<h2>Copyright and license</h2>
-
+<h2 id="copyright-and-license">Copyright and license</h2>
 <p>Copyright (C) Taylan Ulrich Bayırlı/Kammer (2015). All Rights Reserved.</p>
-
-<p>Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:</p>
-
-<p>The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.</p>
-
-<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</body>
+</html>
