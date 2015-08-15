@@ -147,7 +147,7 @@ The `set!` and `define-record-type` exports of the library conflict
 with the ones in `(scheme base)`, so either have to be renamed, or
 more typically, the ones from `(scheme base)` excluded.
 
-Record types not defined with the `default-record-type` exported by
+Record types not defined with the `define-record-type` exported by
 this library won't work with `ref` and `set!`.
 
 
