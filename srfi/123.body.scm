@@ -85,7 +85,7 @@
 
 ;;; Main
 
-(define ref
+(define %ref
   (case-lambda
     ((object field)
      (let ((getter (lookup-getter object))
@@ -101,6 +101,11 @@
      (let ((getter (lookup-getter object)))
        (getter object field default)))))
 
+(define (%ref* object field . fields)
+  (if (null? fields)
+      (%ref object field)
+      (apply %ref* (%ref object field) fields)))
+
 (define-syntax set!
   (syntax-rules ()
     ((set! <place> <expression>)
@@ -110,7 +115,23 @@
             (setter (lookup-setter object)))
        (setter object <field> <value>)))))
 
-(set! (setter ref) (lambda (object field value) (set! object field value)))
+(define ref
+  (getter-with-setter
+   %ref
+   (lambda (object field value)
+     (set! object field value))))
+
+(define ref*
+  (getter-with-setter
+   %ref*
+   (rec (set!* object field rest0 . rest)
+     (if (null? rest)
+         (set! object field rest0)
+         (apply set!* (ref object field) rest0 rest)))))
+
+(define ~ ref*)
+
+(define $bracket-apply$ ref*)
 
 (define (lookup-getter object)
   (or (hashtable-ref getter-table (type-of object) #f)
