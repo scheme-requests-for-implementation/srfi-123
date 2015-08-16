@@ -1,4 +1,4 @@
-(define-library (generic-ref-set)
+(define-library (srfi 123)
   (export
    ref set! define-record-type (rename ref $bracket-apply$))
   (import
@@ -8,4 +8,4 @@
    (r6rs hashtables)
    (srfi 1)
    (rename (srfi 17) (set! %set!)))
-  (include "generic-ref-set.body.scm"))
+  (include "123.body.scm"))
