@@ -8,4 +8,8 @@
    (r6rs hashtables)
    (srfi 1)
    (rename (srfi 17) (set! %set!)))
+  (cond-expand
+   ((library (srfi 4))
+    (import (srfi 4)))
+   (else))
   (include "123.body.scm"))

@@ -84,8 +84,8 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <pre><code>(ref &#39;(0 1 2) 3 &#39;default)  ;error: list-ref: Too many arguments.
                            ;Unless the implementation&#39;s list-ref
                            ;does something else.</code></pre>
-<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, and all record types. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any non-standard types they support.</p>
-<p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, and vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
+<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, all record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any non-standard types they support.</p>
+<p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
 <p>If SRFI-17 is supported, then the <code>ref</code> procedure has the following setter: <code>(lambda (object field value) (set! object field value))</code></p>
 <ul>
 <li><code>(set! object field value)</code> (syntax)</li>

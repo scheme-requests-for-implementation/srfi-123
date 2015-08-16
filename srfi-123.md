@@ -195,15 +195,15 @@ error.
                                ;does something else.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
-vectors, and all record types.  Only hashtables are a sparse type.
-Implementations are encouraged to expand this list of types with any
-non-standard types they support.
+vectors, all record types, and SRFI-4 vectors if present.  Only
+hashtables are a sparse type.  Implementations are encouraged to
+expand this list of types with any further types they support.
 
 Valid types for `field` depend on the type of `object`.  For
-bytevectors, hashtables, strings, and vectors, refer to their
-respective `*-ref` procedures.  For pairs, refer to `list-ref`.  For
-records, symbols that correspond with the record type's field names
-are allowed.
+bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer
+to their respective `*-ref` procedures.  For pairs, refer to
+`list-ref`.  For records, symbols that correspond with the record
+type's field names are allowed.
 
 If SRFI-17 is supported, then the `ref` procedure has the following
 setter: `(lambda (object field value) (set! object field value))`

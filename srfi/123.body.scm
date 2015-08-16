@@ -35,6 +35,36 @@
               alist)
     table))
 
+;;; SRFI-4 support
+
+(cond-expand
+ ((library (srfi 4))
+  (define srfi-4-getters
+    (list (cons s8vector? s8vector-ref)
+          (cons u8vector? u8vector-ref)
+          (cons s16vector? s16vector-ref)
+          (cons u16vector? u16vector-ref)
+          (cons s32vector? s32vector-ref)
+          (cons u32vector? u32vector-ref)
+          (cons s64vector? s64vector-ref)
+          (cons u64vector? u64vector-ref)))
+  (define srfi-4-setters
+    (list (cons s8vector? s8vector-set!)
+          (cons u8vector? u8vector-set!)
+          (cons s16vector? s16vector-set!)
+          (cons u16vector? u16vector-set!)
+          (cons s32vector? s32vector-set!)
+          (cons u32vector? u32vector-set!)
+          (cons s64vector? s64vector-set!)
+          (cons u64vector? u64vector-set!)))
+  (define srfi-4-types
+    (list s8vector? u8vector? s16vector? u16vector? s32vector? u32vector?
+          s64vector? u64vector?)))
+ (else
+  (define srfi-4-getters '())
+  (define srfi-4-setters '())
+  (define srfi-4-types '())))
+
 ;;; Main
 
 (define ref
@@ -80,26 +110,32 @@
 
 (define getter-table
   (alist->hashtable
-   (list (cons bytevector? bytevector-u8-ref)
-         (cons hashtable? hashtable-ref)
-         (cons pair? list-ref)
-         (cons string? string-ref)
-         (cons vector? vector-ref))))
+   (append
+    (list (cons bytevector? bytevector-u8-ref)
+          (cons hashtable? hashtable-ref)
+          (cons pair? list-ref)
+          (cons string? string-ref)
+          (cons vector? vector-ref))
+    srfi-4-getters)))
 
 (define setter-table
   (alist->hashtable
-   (list (cons bytevector? bytevector-u8-set!)
-         (cons hashtable? hashtable-set!)
-         (cons pair? list-set!)
-         (cons string? string-set!)
-         (cons vector? vector-set!))))
+   (append
+    (list (cons bytevector? bytevector-u8-set!)
+          (cons hashtable? hashtable-set!)
+          (cons pair? list-set!)
+          (cons string? string-set!)
+          (cons vector? vector-set!))
+    srfi-4-setters)))
 
 (define sparse-types
   (list hashtable?))
 
 (define type-list
-  (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
-        port? procedure? string? symbol? vector?))
+  (append
+   (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
+         port? procedure? string? symbol? vector?)
+   srfi-4-types))
 
 (define-syntax define-record-type
   (syntax-rules ()
