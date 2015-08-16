@@ -20,7 +20,7 @@ subscribe to the list, follow
 [these instructions](http://srfi.schemers.org/srfi-list-subscribe.html).
 You can access previous messages via the mailing list
 [archive](http://srfi-email.schemers.org/srfi-123).
-  
+
   - Received: 2015/8/14
   - Draft #1 published: 2015/8/15
 
@@ -109,10 +109,17 @@ types:
     (set! foo 'b 2)  ;error: No such assignable field of record.
     ```
 
-Alists are unfortunately impossible to support due to the lack of a
-reliable `alist?` predicate.  (It's ambiguous in that every alist is
-also a list, and any list may coincidentally have the structure of an
-alist.)
+Alists are difficult to support due to the lack of a reliable `alist?`
+predicate.  (It's ambiguous in that every alist is also a list, and
+any list may coincidentally have the structure of an alist.)  It was
+considered to support non-integer keyed alists as a special case, but
+this would lead to silent code breakage when a programmer forgot about
+the API inconsistency and exchanged a non-integer key for an integer
+key in existing code.  It was also considered to drop list support in
+favor of alist support, but that idea discarded as well because the
+hypothetical `alist-set!` is an exceedingly rare operation.
+(Prepending an entry to the front, possibly hiding another entry with
+the same key, is more common.)
 
 A `ref*` procedure taking an arbitrary number of `field` arguments and
 walking through several collections was considered, but deemed
