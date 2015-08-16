@@ -176,43 +176,50 @@
          port? procedure? string? symbol? vector?)
    srfi-4-types))
 
+(define (register-getter-with-setter! type getter sparse?)
+  (push! type-list type)
+  (set! getter-table type getter)
+  (set! setter-table type (setter getter))
+  (when sparse?
+    (push! sparse-types type)))
+
 (define-syntax define-record-type
   (syntax-rules ()
     ((_ <name> <constructor> <pred> <field> ...)
      (begin
        (%define-record-type <name> <constructor> <pred> <field> ...)
-       (push! type-list <pred>)
-       (register-record-getter <pred> <field> ...)
-       (register-record-setter <pred> <field> ...)))))
+       (register-getter-with-setter!
+        <pred>
+        (getter-with-setter (record-getter <field> ...)
+                            (record-setter <field> ...))
+        #f)))))
 
-(define-syntax register-record-getter
+(define-syntax record-getter
   (syntax-rules ()
-    ((_ <pred> (<field> <getter> . <rest>) ...)
+    ((_ (<field> <getter> . <rest>) ...)
      (let ((getters (alist->hashtable (list (cons '<field> <getter>) ...))))
-       (define (getter record field)
+       (lambda (record field)
          (let ((getter (or (ref getters field #f)
                            (error "No such field of record." record field))))
-           (getter record field)))
-       (set! getter-table <pred> getter)))))
+           (getter record field)))))))
 
-(define-syntax register-record-setter
+(define-syntax record-setter
   (syntax-rules ()
     ((_ . <rest>)
-     (%register-record-setter () . <rest>))))
+     (%record-setter () . <rest>))))
 
-(define-syntax %register-record-setter
+(define-syntax %record-setter
   (syntax-rules ()
-    ((_ <setters> <pred> (<field> <getter>) . <rest>)
-     (%register-record-setter <setters> <pred> . <rest>))
-    ((_ <setters> <pred> (<field> <getter> <setter>) . <rest>)
-     (%register-record-setter ((<field> <setter>) . <setters>) <pred> . <rest>))
-    ((_ ((<field> <setter>) ...) <pred>)
+    ((_ <setters> (<field> <getter>) . <rest>)
+     (%record-setter <setters> . <rest>))
+    ((_ <setters> (<field> <getter> <setter>) . <rest>)
+     (%record-setter ((<field> <setter>) . <setters>) . <rest>))
+    ((_ ((<field> <setter>) ...))
      (let ((setters (alist->hashtable (list (cons '<field> <setter>) ...))))
-       (define (setter record field value)
+       (lambda (record field value)
          (let ((setter (or (ref setters field #f)
                            (error "No such assignable field of record."
                                   record field))))
-           (setter record value)))
-       (set! setter-table <pred> setter)))))
+           (setter record value)))))))
 
 ;;; generic-ref-set.body.scm ends here

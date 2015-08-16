@@ -234,14 +234,22 @@ as `(setter ref*)` when needed.
     (define (store-item! field-chain value)
       (apply (setter ref*) the-store (append field-chain (list value))))
 
+- `(register-getter-with-setter! type getter sparse?)` (procedure)
+
+Registers a new type/getter/setter triple for the dynamic dispatch.
+`Type` is a type predicate, `getter` is a procedure that has a setter
+associated with it (as returned by the `getter-with-setter` procedure
+of SRFI-17), and `sparse?` is a Boolean indicating whether the type is
+a sparse type (see `ref` specification).
+
 
 Considerations when using as a library
 --------------------------------------
 
-The intent of this SRFI is to encourage Scheme systems to extend the
-semantics of their default `set!` operator in line with this SRFI, and
-add `ref` and `ref*` to their standard library.  On the meanwhile, it
-can be used as a separate library, but certain considerations apply.
+The intent of this SRFI is to encourage Scheme systems to extend their
+standard library in accordance with the above specification.  On the
+meanwhile, the reference implementation can be used as a separate
+library, but certain considerations apply.
 
 The `set!` and `define-record-type` exports of the library conflict
 with the ones in `(scheme base)`, so either have to be renamed, or

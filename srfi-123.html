@@ -103,8 +103,12 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>The corresponding <code>set!*</code> procedure is left out, but can be accessed as <code>(setter ref*)</code> when needed.</p>
 <pre><code>(define (store-item! field-chain value)
   (apply (setter ref*) the-store (append field-chain (list value))))</code></pre>
+<ul>
+<li><code>(register-getter-with-setter! type getter sparse?)</code> (procedure)</li>
+</ul>
+<p>Registers a new type/getter/setter triple for the dynamic dispatch. <code>Type</code> is a type predicate, <code>getter</code> is a procedure that has a setter associated with it (as returned by the <code>getter-with-setter</code> procedure of SRFI-17), and <code>sparse?</code> is a Boolean indicating whether the type is a sparse type (see <code>ref</code> specification).</p>
 <h2 id="considerations-when-using-as-a-library">Considerations when using as a library</h2>
-<p>The intent of this SRFI is to encourage Scheme systems to extend the semantics of their default <code>set!</code> operator in line with this SRFI, and add <code>ref</code> and <code>ref*</code> to their standard library. On the meanwhile, it can be used as a separate library, but certain considerations apply.</p>
+<p>The intent of this SRFI is to encourage Scheme systems to extend their standard library in accordance with the above specification. On the meanwhile, the reference implementation can be used as a separate library, but certain considerations apply.</p>
 <p>The <code>set!</code> and <code>define-record-type</code> exports of the library conflict with the ones in <code>(scheme base)</code>, so either have to be renamed, or more typically, the ones from <code>(scheme base)</code> excluded.</p>
 <p>Record types not defined with the <code>define-record-type</code> exported by this library won't work with <code>ref</code> and <code>set!</code>.</p>
 <h2 id="implementation">Implementation</h2>
