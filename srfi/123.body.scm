@@ -106,27 +106,22 @@
       (%ref object field)
       (apply %ref* (%ref object field) fields)))
 
-(define-syntax set!
-  (syntax-rules ()
-    ((set! <place> <expression>)
-     (%set! <place> <expression>))
-    ((set! <object> <field> <value>)
-     (let* ((object <object>)
-            (setter (lookup-setter object)))
-       (setter object <field> <value>)))))
+(define (%set! object field value)
+  (let ((setter (lookup-setter object)))
+    (setter object field value)))
 
 (define ref
   (getter-with-setter
    %ref
    (lambda (object field value)
-     (set! object field value))))
+     (%set! object field value))))
 
 (define ref*
   (getter-with-setter
    %ref*
    (rec (set!* object field rest0 . rest)
      (if (null? rest)
-         (set! object field rest0)
+         (%set! object field rest0)
          (apply set!* (ref object field) rest0 rest)))))
 
 (define ~ ref*)
@@ -178,8 +173,8 @@
 
 (define (register-getter-with-setter! type getter sparse?)
   (push! type-list type)
-  (set! getter-table type getter)
-  (set! setter-table type (setter getter))
+  (set! (~ getter-table type) getter)
+  (set! (~ setter-table type) (setter getter))
   (when sparse?
     (push! sparse-types type)))
 
