@@ -70,8 +70,9 @@ type-specific accessor and modifier procedures in performance-critical
 sections of code.
 
 The operators are specified to work on bytevectors, R6RS hashtables,
-lists/pairs, strings, vectors, and all record types.  Some notes on
-specific types:
+lists/pairs, strings, vectors, and non-opaque record types.  (R6RS and
+SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.)
+Some notes on specific types:
 
 - For bytevectors, 8-bit unsigned integer operations are assumed.
   There is no obvious way to incorporate other bytevector operations
@@ -185,7 +186,7 @@ error.
                                ;does something else.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
-vectors, all record types, and SRFI-4 vectors if present.  Only
+vectors, non-opaque record types, and SRFI-4 vectors if present.  Only
 hashtables are a sparse type.  Implementations are encouraged to
 expand this list of types with any further types they support.
 

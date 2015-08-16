@@ -30,7 +30,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>And define <code>~</code> as a synonym to <code>ref*</code>, as well as define an SRFI-17 setter for it: <code>(set! (~ object field1 field2 ...) value)</code>.</p>
 <p>Note that this makes <code>(set! object field value)</code> redundant in the strict sense, since it is served by <code>(set! (~ object field) value)</code>. We decide to keep this syntax anyhow since it is expected to be a very common use-case, for which the additional parentheses and tilde may as well be saved.</p>
 <p>We believe the overhead involved in the dynamic dispatch is negligible in most cases, and furthermore a programmer can always fall back to type-specific accessor and modifier procedures in performance-critical sections of code.</p>
-<p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, and all record types. Some notes on specific types:</p>
+<p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, and non-opaque record types. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
 <ul>
 <li><p>For bytevectors, 8-bit unsigned integer operations are assumed. There is no obvious way to incorporate other bytevector operations into the generalized API, and a programmer is most likely to have single-byte operations in mind when using a generalized API on bytevectors.</p>
 <pre><code>(define bv (bytevector 0 1 2 3))
@@ -78,7 +78,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <pre><code>(ref &#39;(0 1 2) 3 &#39;default)  ;error: list-ref: Too many arguments.
                            ;Unless the implementation&#39;s list-ref
                            ;does something else.</code></pre>
-<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, all record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
+<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
 <p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
 <p>The <code>ref</code> procedure has the following SRFI-17 setter:</p>
 <pre><code>(lambda (object field value) (set! object field value))</code></pre>
