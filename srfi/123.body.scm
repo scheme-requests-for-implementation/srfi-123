@@ -35,6 +35,24 @@
               alist)
     table))
 
+(define (pair-ref pair key)
+  (cond
+   ((eqv? car key)
+    (car pair))
+   ((eqv? cdr key)
+    (cdr pair))
+   (else
+    (list-ref pair key))))
+
+(define (pair-set! pair key value)
+  (cond
+   ((eqv? car key)
+    (set-car! pair value))
+   ((eqv? cdr key)
+    (set-cdr! pair value))
+   (else
+    (list-set! pair key value))))
+
 ;;; SRFI-4 support
 
 (cond-expand
@@ -113,7 +131,7 @@
    (append
     (list (cons bytevector? bytevector-u8-ref)
           (cons hashtable? hashtable-ref)
-          (cons pair? list-ref)
+          (cons pair? pair-ref)
           (cons string? string-ref)
           (cons vector? vector-ref))
     srfi-4-getters)))
@@ -123,7 +141,7 @@
    (append
     (list (cons bytevector? bytevector-u8-set!)
           (cons hashtable? hashtable-set!)
-          (cons pair? list-set!)
+          (cons pair? pair-set!)
           (cons string? string-set!)
           (cons vector? vector-set!))
     srfi-4-setters)))

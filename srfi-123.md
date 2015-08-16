@@ -57,8 +57,8 @@ type-specific accessor and modifier procedures in performance-critical
 sections of code.
 
 The operators are specified to work on bytevectors, R6RS hashtables,
-lists, strings, vectors, and all record types.  Some notes on specific
-types:
+lists/pairs, strings, vectors, and all record types.  Some notes on
+specific types:
 
 - For bytevectors, 8-bit unsigned integer operations are assumed.
   There is no obvious way to incorporate other bytevector operations
@@ -84,15 +84,14 @@ types:
     (ref table "bar")  ;error: Object has no entry for field.
     ```
 
-- Lists are supported by testing the given object for a pair.  Pairs
-  themselves are senseless to support because `(set! pair car value)`
-  contains the same number of words as `(set-car! pair value)`.  In
-  the `ref` equivalent, it even contains one word more:
-  `(ref pair car)` vs. `(car pair)`.
+- When a pair is encountered, the field argument may be the procedures
+  `car` or `cdr`, or an integer index indicating the pair should be
+  viewed as the head of a list.
 
-    ```
+    ````
+    (ref '(a b c . d) cdr)  ;=> (b c . d)
     (ref '(a b c . d) 2)  ;=> c
-    ```
+    ````
 
 - For records, the accepted values for the `field` parameter are
   symbols corresponding to the record type's field names.  The

@@ -27,7 +27,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>In contrast, most other languages offer very short and simple syntax for such operations, such as square bracket and dotted notation: <code>object[field]</code> and <code>object.field</code> for access; <code>object[field] = value</code> and <code>object.field = value</code> for modification.</p>
 <p>To accommodate, we define a pair of generic accessor and modifier operators that work through type-based dynamic dispatch: <code>(ref object field)</code> for access and <code>(set! object field value)</code> for modification.</p>
 <p>We believe the overhead involved in this is negligible in most code-bases, and furthermore a programmer can always fall back to the type-specific accessor and modifier procedures in performance-critical sections of code.</p>
-<p>The operators are specified to work on bytevectors, R6RS hashtables, lists, strings, vectors, and all record types. Some notes on specific types:</p>
+<p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, and all record types. Some notes on specific types:</p>
 <ul>
 <li><p>For bytevectors, 8-bit unsigned integer operations are assumed. There is no obvious way to incorporate other bytevector operations into the generalized API, and a programmer is most likely to have single-byte operations in mind when using a generalized API on bytevectors.</p>
 <pre><code>(define bv (bytevector 0 1 2 3))
@@ -40,8 +40,9 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 (set! table &quot;foo&quot; &quot;Foobar.&quot;)
 (ref table &quot;foo&quot;)  ;=&gt; &quot;Foobar.&quot;
 (ref table &quot;bar&quot;)  ;error: Object has no entry for field.</code></pre></li>
-<li><p>Lists are supported by testing the given object for a pair. Pairs themselves are senseless to support because <code>(set! pair car value)</code> contains the same number of words as <code>(set-car! pair value)</code>. In the <code>ref</code> equivalent, it even contains one word more: <code>(ref pair car)</code> vs. <code>(car pair)</code>.</p>
-<pre><code>(ref &#39;(a b c . d) 2)  ;=&gt; c</code></pre></li>
+<li><p>When a pair is encountered, the field argument may be the procedures <code>car</code> or <code>cdr</code>, or an integer index indicating the pair should be viewed as the head of a list.</p>
+<pre><code>(ref &#39;(a b c . d) cdr)  ;=&gt; (b c . d)
+(ref &#39;(a b c . d) 2)  ;=&gt; c</code></pre></li>
 <li><p>For records, the accepted values for the <code>field</code> parameter are symbols corresponding to the record type's field names. The overhead involved in looking up the correct accessor of modifier falls under the same rationale as other kinds of overhead involved with this SRFI.</p>
 <pre><code>(define-record-type &lt;foo&gt; (make-foo a b) foo?
   (a foo-a set-foo-a!)
