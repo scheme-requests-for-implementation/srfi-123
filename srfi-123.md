@@ -233,15 +233,6 @@ the one from `(scheme base)` excluded.
 Record types not defined with the `define-record-type` exported by
 this library won't work with `ref` and `ref*`.
 
-The `define-record-type` exported by this library expands to a record
-type definition followed with a command, essentially eliminating the
-"definition" status of `define-record-type`.  This means, for example,
-that you can't use it more than once (only at the end) within the
-internal definitions sequence of a body.  It's a rare use-case, but if
-you need it, you can nest each additional `define-record-type` use in
-a further `(let () ...)`.  It works fine in the top-level, since there
-definitions and commands can be interspersed.
-
 
 Implementation
 --------------

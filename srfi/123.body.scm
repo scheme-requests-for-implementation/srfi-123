@@ -183,11 +183,15 @@
     ((_ <name> <constructor> <pred> <field> ...)
      (begin
        (%define-record-type <name> <constructor> <pred> <field> ...)
-       (register-getter-with-setter!
-        <pred>
-        (getter-with-setter (record-getter <field> ...)
-                            (record-setter <field> ...))
-        #f)))))
+       ;; Throw-away definition to not disturb an internal definitions sequence.
+       (define __throwaway
+         (begin
+          (register-getter-with-setter!
+           <pred>
+           (getter-with-setter (record-getter <field> ...)
+                               (record-setter <field> ...))
+           #f)
+          #f))))))
 
 (define-syntax record-getter
   (syntax-rules ()
