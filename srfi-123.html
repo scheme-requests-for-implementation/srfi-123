@@ -23,30 +23,36 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <li>Draft #2 published: 2015/8/16</li>
 </ul>
 <h2 id="abstract">Abstract</h2>
-<p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary &quot;collection&quot; objects. We fill this gap for Scheme by defining generalized <code>ref</code> and <code>set!</code> operators.</p>
+<p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary &quot;collection&quot; objects. We fill this gap for Scheme by defining generalized accessors, and an associated SRFI-17 setter.</p>
 <h2 id="rationale">Rationale</h2>
 <p>In some types of code-bases, accessing and modifying fields of certain collection objects (such as vectors, hashtables, or records) are ubiquitous operations. Standard Scheme APIs contain verbose procedure names specialized for each data type, which may become very tedious to type, and clutter the code.</p>
 <p>In contrast, most other languages offer very short and simple syntax for such operations, such as square bracket and dotted notation: <code>object[field]</code> and <code>object.field</code> for access; <code>object[field] = value</code> and <code>object.field = value</code> for modification.</p>
-<p>To accommodate, we define a pair of generic accessor and modifier operators that work through type-based dynamic dispatch: <code>(ref object field)</code> for access and <code>(set! object field value)</code> for modification.</p>
-<p>We also define a variant of <code>ref</code> that accepts chained field arguments: <code>(ref* object field1 field2 ...)</code>.</p>
-<p>And define <code>~</code> as a synonym to <code>ref*</code>, as well as define an SRFI-17 setter for it: <code>(set! (~ object field1 field2 ...) value)</code>.</p>
-<p>Note that this makes <code>(set! object field value)</code> redundant in the strict sense, since it is served by <code>(set! (~ object field) value)</code>. We decide to keep this syntax anyhow since it is expected to be a very common use-case, for which the additional parentheses and tilde may as well be saved.</p>
+<p>To accommodate, we define a pair of generic accessor operators that work through type-based dynamic dispatch: <code>(ref object field)</code>, and <code>(ref* object field1 field2 ...)</code> for chained access.</p>
+<pre><code>(ref #(a b c) 1)  ;=&gt; b
+(ref* #(a (x y #u8(1 2 3)) c) 1 2 0)  ;=&gt; 1</code></pre>
+<p>We define <code>~</code> as a synonym to <code>ref*</code>, and define an SRFI-17 setter for it.</p>
+<pre><code>(define struct #(a (x y #u8(1 2 3)) c))
+(set! (~ struct 1 2 0) 4)
+struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
+<p>Plain <code>ref</code>, instead of allowing chaining, takes an optional &quot;default&quot; argument for objects such as hashtables.</p>
+<pre><code>(define table (make-eqv-hashtable))
+(ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
+(set! (~ table &quot;foo&quot;) &quot;Foobar.&quot;)
+(ref table &quot;foo&quot; &#39;not-found)  ;=&gt; &quot;Foobar.&quot;</code></pre>
+<p>Lack of a default argument raises an error in this case. Since <code>ref*</code> cannot take default arguments for any fields it accesses, it always raises an error when a hashtable key in the chain is not found.</p>
+<pre><code>(define table (make-eqv-hashtable))
+(define lst (list 0 1 table 3))
+(ref* lst 2 &quot;foo&quot; &#39;x)  ;error while accessing &quot;foo&quot; from table</code></pre>
 <p>We believe the overhead involved in the dynamic dispatch is negligible in most cases, and furthermore a programmer can always fall back to type-specific accessor and modifier procedures in performance-critical sections of code.</p>
 <p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
 <ul>
 <li><p>For bytevectors, 8-bit unsigned integer operations are assumed. There is no obvious way to incorporate other bytevector operations into the generalized API, and a programmer is most likely to have single-byte operations in mind when using a generalized API on bytevectors.</p>
 <pre><code>(define bv (bytevector 0 1 2 3))
 (ref bv 2)  ;=&gt; 2
-(set! bv 2 5)
+(set! (~ bv 2) 5)
 (ref bv 2)  ;=&gt; 5</code></pre></li>
-<li><p>For hashtables, the <code>ref</code> operator takes an optional <code>default</code> argument whose semantics is akin to <code>hashtable-ref</code>. (This is not possible with <code>ref*</code>; it will always behave as when no default argument is passed.)</p>
-<pre><code>(define table (make-eqv-hashtable))
-(ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
-(set! table &quot;foo&quot; &quot;Foobar.&quot;)
-(ref table &quot;foo&quot;)  ;=&gt; &quot;Foobar.&quot;
-(ref table &quot;bar&quot;)  ;error: Object has no entry for field.</code></pre></li>
-<li><p>When a pair is encountered, the field argument may be the procedures <code>car</code> or <code>cdr</code>, or an integer index indicating the pair should be viewed as the head of a list.</p>
-<pre><code>(ref &#39;(a b c . d) cdr)  ;=&gt; (b c . d)
+<li><p>When a pair is encountered, the field argument may be the symbols <code>car</code> or <code>cdr</code>, or an integer index indicating the pair should be viewed as the head of a list.</p>
+<pre><code>(ref &#39;(a b c . d) &#39;cdr)  ;=&gt; (b c . d)
 (ref &#39;(a b c . d) 2)  ;=&gt; c</code></pre></li>
 <li><p>For records, the accepted values for the <code>field</code> parameter are symbols corresponding to the record type's field names. The overhead involved in looking up the correct accessor of modifier falls under the same rationale as other kinds of overhead involved with this SRFI.</p>
 <pre><code>(define-record-type &lt;foo&gt; (make-foo a b) foo?
@@ -54,7 +60,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
   (b foo-b))
 (define foo (make-foo 0 1))
 (ref foo &#39;a)  ;=&gt; 0
-(set! foo &#39;b 2)  ;error: No such assignable field of record.</code></pre></li>
+(set! (~ foo &#39;b) 2)  ;error: No such assignable field of record.</code></pre></li>
 </ul>
 <p>Alists are difficult to support due to the lack of a reliable <code>alist?</code> predicate. (It's ambiguous in that every alist is also a list, and any list may coincidentally have the structure of an alist.) It was considered to support non-integer keyed alists as a special case, but this would lead to silent code breakage when a programmer forgot about the API inconsistency and exchanged a non-integer key for an integer key in existing code. It was also considered to drop list support in favor of alist support, but that idea discarded as well because the hypothetical <code>alist-set!</code> is an exceedingly rare operation. (Prepending an entry to the front, possibly hiding another entry with the same key, is more common.)</p>
 <h2 id="integration-with-srfi-105">Integration with SRFI-105</h2>
@@ -82,8 +88,6 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
                            ;does something else.</code></pre>
 <p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
 <p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
-<p>The <code>ref</code> procedure has the following SRFI-17 setter:</p>
-<pre><code>(lambda (object field value) (set! object field value))</code></pre>
 <ul>
 <li><code>(ref* object field field* ...)</code> (procedure)</li>
 <li><code>(~ object field field* ...)</code></li>
@@ -91,34 +95,27 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>The semantics is of this procedure is as follows:</p>
 <pre><code>(ref* object field)            = (ref object field)
 (ref* object field field+ ...) = (ref* (ref object field) field+ ...)</code></pre>
-<p>It has the following SRFI-17 setter:</p>
-<pre><code>(define (set!* object field rest0 . rest)
-  (if (null? rest)
-      (set! object field rest0)
-      (apply set!* (ref object field) rest0 rest)))</code></pre>
-<ul>
-<li><code>(set! object field value)</code> (syntax)</li>
-</ul>
-<p>Sets the value for <code>field</code> in <code>object</code> to <code>value</code>.</p>
-<p>Valid types for <code>object</code> and <code>field</code> are the same as in the <code>ref</code> procedure. Valid types for <code>value</code> are whatever values <code>object</code> may hold in <code>field</code>.</p>
-<p>Note: This operator is only a syntax keyword because it overloads the normal <code>set!</code> syntax. An equivalent procedure is trivial to define: <code>(lambda (object field value) (set! object field value))</code>. This procedure is in fact the setter of <code>ref</code>, so it can be accessed as <code>(setter ref)</code> when needed.</p>
-<p>The corresponding <code>set!*</code> procedure is left out, but can be accessed as <code>(setter ref*)</code> when needed.</p>
+<p>It has an associated SRFI-17 setter, which does the expected thing:</p>
+<pre><code>(set! (~ obj f1 f2 f3) value)</code></pre>
+<p>changes the value that would be returned from <code>(~ obj f1 f2 f3)</code> to <code>value</code>. Note that this procedure can be accessed as <code>(setter ref*)</code> when needed:</p>
 <pre><code>(define (store-item! field-chain value)
   (apply (setter ref*) the-store (append field-chain (list value))))</code></pre>
 <ul>
 <li><code>(register-getter-with-setter! type getter sparse?)</code> (procedure)</li>
 </ul>
-<p>Registers a new type/getter/setter triple for the dynamic dispatch. <code>Type</code> is a type predicate, <code>getter</code> is a procedure that has a setter associated with it (as returned by the <code>getter-with-setter</code> procedure of SRFI-17), and <code>sparse?</code> is a Boolean indicating whether the type is a sparse type (see <code>ref</code> specification).</p>
+<p>Registers a new type/getter/setter triple for the dynamic dispatch. <code>Type</code> is a type predicate, <code>getter</code> is a procedure that has a setter associated with it, and <code>sparse?</code> is a Boolean indicating whether the type is a sparse type (see <code>ref</code> specification).</p>
 <h2 id="considerations-when-using-as-a-library">Considerations when using as a library</h2>
 <p>The intent of this SRFI is to encourage Scheme systems to extend their standard library in accordance with the above specification. On the meanwhile, the reference implementation can be used as a separate library, but certain considerations apply.</p>
-<p>The <code>set!</code> and <code>define-record-type</code> exports of the library conflict with the ones in <code>(scheme base)</code>, so either have to be renamed, or more typically, the ones from <code>(scheme base)</code> excluded.</p>
-<p>Record types not defined with the <code>define-record-type</code> exported by this library won't work with <code>ref</code> and <code>set!</code>.</p>
-<p>The <code>define-record-type</code> exported by this library expands to a record type definition followed with a command, essentially eliminating the &quot;definition&quot; status of <code>define-record-type</code>. This means, for example, that you can't use it more than once (only at the end) within the internal definitions sequence of a body. It's a rare use-case, but if you need it, you can nest each additional <code>define-record-type</code> use in a further <code>(let () ...)</code>. It works fine in the top-level, since there definitions and commands can be interspersed.</p>
+<p>The <code>define-record-type</code> export of the library conflicts with the one in <code>(scheme base)</code>, so either has to be renamed, or more typically, the one from <code>(scheme base)</code> excluded.</p>
+<p>Record types not defined with the <code>define-record-type</code> exported by this library won't work with <code>ref</code> and <code>ref*</code>.</p>
 <h2 id="implementation">Implementation</h2>
 <p>A reference implementation as a library is found in the version control repository of this SRFI.</p>
 <p>It might be desirable for Scheme systems to offer a more efficient <code>type-of</code> procedure than the one used in this implementation, which in the worst case consumes linear time with regard to the number of types (including every record type) within the system, albeit with a very small constant factor: one call to each type predicate.</p>
 <h2 id="acknowledgments">Acknowledgments</h2>
-<p>Original idea and some input during design by Jorgen Schäfer.</p>
+<p>Thanks to Jorgen Schäfer for inspiring me to write this SRFI and making the initial suggestion for the <code>ref</code> procedure and ternary <code>set!</code> syntax, as well as providing continuous input.</p>
+<p>The <code>ref*</code> procedure with its <code>~</code> synonym and SRFI-17 setter (which replaced the initially considered ternary <code>set!</code> syntax) seems to have first appeared in Gauche. Thanks to Shiro Kawai: <a href="http://blog.practical-scheme.net/gauche/20100428-shorter-names" class="uri">http://blog.practical-scheme.net/gauche/20100428-shorter-names</a></p>
+<p>Thanks to Evan Hanson for the idea of using a throw-away <code>define</code> in the expansion of <code>define-record-type</code> so as not to disturb a sequence of internal definitions.</p>
+<p>Thanks also to everyone else on the discussion mailing list for their input.</p>
 <h2 id="copyright-and-license">Copyright and license</h2>
 <p>Copyright (C) Taylan Ulrich Bayırlı/Kammer (2015). All Rights Reserved.</p>
 <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>

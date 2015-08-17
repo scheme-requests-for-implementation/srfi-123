@@ -37,9 +37,9 @@
 
 (define (pair-ref pair key)
   (cond
-   ((eqv? car key)
+   ((eqv? 'car key)
     (car pair))
-   ((eqv? cdr key)
+   ((eqv? 'cdr key)
     (cdr pair))
    (else
     (list-ref pair key))))
@@ -106,27 +106,22 @@
       (%ref object field)
       (apply %ref* (%ref object field) fields)))
 
-(define-syntax set!
-  (syntax-rules ()
-    ((set! <place> <expression>)
-     (%set! <place> <expression>))
-    ((set! <object> <field> <value>)
-     (let* ((object <object>)
-            (setter (lookup-setter object)))
-       (setter object <field> <value>)))))
+(define (%set! object field value)
+  (let ((setter (lookup-setter object)))
+    (setter object field value)))
 
 (define ref
   (getter-with-setter
    %ref
    (lambda (object field value)
-     (set! object field value))))
+     (%set! object field value))))
 
 (define ref*
   (getter-with-setter
    %ref*
    (rec (set!* object field rest0 . rest)
      (if (null? rest)
-         (set! object field rest0)
+         (%set! object field rest0)
          (apply set!* (ref object field) rest0 rest)))))
 
 (define ~ ref*)
@@ -178,8 +173,8 @@
 
 (define (register-getter-with-setter! type getter sparse?)
   (push! type-list type)
-  (set! getter-table type getter)
-  (set! setter-table type (setter getter))
+  (set! (~ getter-table type) getter)
+  (set! (~ setter-table type) (setter getter))
   (when sparse?
     (push! sparse-types type)))
 
@@ -188,11 +183,15 @@
     ((_ <name> <constructor> <pred> <field> ...)
      (begin
        (%define-record-type <name> <constructor> <pred> <field> ...)
-       (register-getter-with-setter!
-        <pred>
-        (getter-with-setter (record-getter <field> ...)
-                            (record-setter <field> ...))
-        #f)))))
+       ;; Throw-away definition to not disturb an internal definitions sequence.
+       (define __throwaway
+         (begin
+          (register-getter-with-setter!
+           <pred>
+           (getter-with-setter (record-getter <field> ...)
+                               (record-setter <field> ...))
+           #f)
+          #f))))))
 
 (define-syntax record-getter
   (syntax-rules ()
@@ -201,7 +200,7 @@
        (lambda (record field)
          (let ((getter (or (ref getters field #f)
                            (error "No such field of record." record field))))
-           (getter record field)))))))
+           (getter record)))))))
 
 (define-syntax record-setter
   (syntax-rules ()

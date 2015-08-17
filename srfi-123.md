@@ -32,7 +32,7 @@ Abstract
 Lisp dialects including Scheme have traditionally lacked short,
 simple, generic syntax for accessing and modifying the fields of
 arbitrary "collection" objects.  We fill this gap for Scheme by
-defining generalized `ref` and `set!` operators.
+defining generalized accessors, and an associated SRFI-17 setter.
 
 
 Rationale
@@ -49,21 +49,35 @@ for such operations, such as square bracket and dotted notation:
 `object[field]` and `object.field` for access; `object[field] = value`
 and `object.field = value` for modification.
 
-To accommodate, we define a pair of generic accessor and modifier
-operators that work through type-based dynamic dispatch: `(ref object
-field)` for access and `(set! object field value)` for modification.
+To accommodate, we define a pair of generic accessor operators that
+work through type-based dynamic dispatch: `(ref object field)`, and
+`(ref* object field1 field2 ...)` for chained access.
 
-We also define a variant of `ref` that accepts chained field
-arguments: `(ref* object field1 field2 ...)`.
+    (ref #(a b c) 1)  ;=> b
+    (ref* #(a (x y #u8(1 2 3)) c) 1 2 0)  ;=> 1
 
-And define `~` as a synonym to `ref*`, as well as define an SRFI-17
-setter for it: `(set! (~ object field1 field2 ...) value)`.
+We define `~` as a synonym to `ref*`, and define an SRFI-17 setter for
+it.
 
-Note that this makes `(set! object field value)` redundant in the
-strict sense, since it is served by `(set! (~ object field) value)`.
-We decide to keep this syntax anyhow since it is expected to be a very
-common use-case, for which the additional parentheses and tilde may as
-well be saved.
+    (define struct #(a (x y #u8(1 2 3)) c))
+    (set! (~ struct 1 2 0) 4)
+    struct  ;=> #(a (x y #u8(4 2 3)) c)
+
+Plain `ref`, instead of allowing chaining, takes an optional "default"
+argument for objects such as hashtables.
+
+    (define table (make-eqv-hashtable))
+    (ref table "foo" 'not-found)  ;=> not-found
+    (set! (~ table "foo") "Foobar.")
+    (ref table "foo" 'not-found)  ;=> "Foobar."
+
+Lack of a default argument raises an error in this case.  Since `ref*`
+cannot take default arguments for any fields it accesses, it always
+raises an error when a hashtable key in the chain is not found.
+
+    (define table (make-eqv-hashtable))
+    (define lst (list 0 1 table 3))
+    (ref* lst 2 "foo" 'x)  ;error while accessing "foo" from table
 
 We believe the overhead involved in the dynamic dispatch is negligible
 in most cases, and furthermore a programmer can always fall back to
@@ -84,29 +98,16 @@ types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
     ```
     (define bv (bytevector 0 1 2 3))
     (ref bv 2)  ;=> 2
-    (set! bv 2 5)
+    (set! (~ bv 2) 5)
     (ref bv 2)  ;=> 5
     ```
 
-- For hashtables, the `ref` operator takes an optional `default`
-  argument whose semantics is akin to `hashtable-ref`.  (This is not
-  possible with `ref*`; it will always behave as when no default
-  argument is passed.)
-
-    ```
-    (define table (make-eqv-hashtable))
-    (ref table "foo" 'not-found)  ;=> not-found
-    (set! table "foo" "Foobar.")
-    (ref table "foo")  ;=> "Foobar."
-    (ref table "bar")  ;error: Object has no entry for field.
-    ```
-
-- When a pair is encountered, the field argument may be the procedures
+- When a pair is encountered, the field argument may be the symbols
   `car` or `cdr`, or an integer index indicating the pair should be
   viewed as the head of a list.
 
     ````
-    (ref '(a b c . d) cdr)  ;=> (b c . d)
+    (ref '(a b c . d) 'cdr)  ;=> (b c . d)
     (ref '(a b c . d) 2)  ;=> c
     ````
 
@@ -122,7 +123,7 @@ types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
       (b foo-b))
     (define foo (make-foo 0 1))
     (ref foo 'a)  ;=> 0
-    (set! foo 'b 2)  ;error: No such assignable field of record.
+    (set! (~ foo 'b) 2)  ;error: No such assignable field of record.
     ```
 
 Alists are difficult to support due to the lack of a reliable `alist?`
@@ -197,10 +198,6 @@ to their respective `*-ref` procedures.  For pairs, refer to
 `list-ref`.  For records, symbols that correspond with the record
 type's field names are allowed.
 
-The `ref` procedure has the following SRFI-17 setter:
-
-    (lambda (object field value) (set! object field value))
-
 - `(ref* object field field* ...)` (procedure)
 - `(~ object field field* ...)`
 
@@ -209,29 +206,13 @@ The semantics is of this procedure is as follows:
     (ref* object field)            = (ref object field)
     (ref* object field field+ ...) = (ref* (ref object field) field+ ...)
 
-It has the following SRFI-17 setter:
+It has an associated SRFI-17 setter, which does the expected thing:
 
-    (define (set!* object field rest0 . rest)
-      (if (null? rest)
-          (set! object field rest0)
-          (apply set!* (ref object field) rest0 rest)))
+    (set! (~ obj f1 f2 f3) value)
 
-- `(set! object field value)` (syntax)
-
-Sets the value for `field` in `object` to `value`.
-
-Valid types for `object` and `field` are the same as in the `ref`
-procedure.  Valid types for `value` are whatever values `object` may
-hold in `field`.
-
-Note: This operator is only a syntax keyword because it overloads the
-normal `set!` syntax.  An equivalent procedure is trivial to define:
-`(lambda (object field value) (set! object field value))`.  This
-procedure is in fact the setter of `ref`, so it can be accessed as
-`(setter ref)` when needed.
-
-The corresponding `set!*` procedure is left out, but can be accessed
-as `(setter ref*)` when needed.
+changes the value that would be returned from `(~ obj f1 f2 f3)` to
+`value`.  Note that this procedure can be accessed as `(setter ref*)`
+when needed:
 
     (define (store-item! field-chain value)
       (apply (setter ref*) the-store (append field-chain (list value))))
@@ -240,9 +221,8 @@ as `(setter ref*)` when needed.
 
 Registers a new type/getter/setter triple for the dynamic dispatch.
 `Type` is a type predicate, `getter` is a procedure that has a setter
-associated with it (as returned by the `getter-with-setter` procedure
-of SRFI-17), and `sparse?` is a Boolean indicating whether the type is
-a sparse type (see `ref` specification).
+associated with it, and `sparse?` is a Boolean indicating whether the
+type is a sparse type (see `ref` specification).
 
 
 Considerations when using as a library
@@ -253,21 +233,12 @@ standard library in accordance with the above specification.  On the
 meanwhile, the reference implementation can be used as a separate
 library, but certain considerations apply.
 
-The `set!` and `define-record-type` exports of the library conflict
-with the ones in `(scheme base)`, so either have to be renamed, or
-more typically, the ones from `(scheme base)` excluded.
+The `define-record-type` export of the library conflicts with the one
+in `(scheme base)`, so either has to be renamed, or more typically,
+the one from `(scheme base)` excluded.
 
 Record types not defined with the `define-record-type` exported by
-this library won't work with `ref` and `set!`.
-
-The `define-record-type` exported by this library expands to a record
-type definition followed with a command, essentially eliminating the
-"definition" status of `define-record-type`.  This means, for example,
-that you can't use it more than once (only at the end) within the
-internal definitions sequence of a body.  It's a rare use-case, but if
-you need it, you can nest each additional `define-record-type` use in
-a further `(let () ...)`.  It works fine in the top-level, since there
-definitions and commands can be interspersed.
+this library won't work with `ref` and `ref*`.
 
 
 Implementation
@@ -286,7 +257,21 @@ small constant factor: one call to each type predicate.
 Acknowledgments
 ---------------
 
-Original idea and some input during design by Jorgen Schäfer.
+Thanks to Jorgen Schäfer for inspiring me to write this SRFI and
+making the initial suggestion for the `ref` procedure and ternary
+`set!` syntax, as well as providing continuous input.
+
+The `ref*` procedure with its `~` synonym and SRFI-17 setter (which
+replaced the initially considered ternary `set!` syntax) seems to have
+first appeared in Gauche.  Thanks to Shiro Kawai:
+<http://blog.practical-scheme.net/gauche/20100428-shorter-names>
+
+Thanks to Evan Hanson for the idea of using a throw-away `define` in
+the expansion of `define-record-type` so as not to disturb a sequence
+of internal definitions.
+
+Thanks also to everyone else on the discussion mailing list for their
+input.
 
 
 Copyright and license
