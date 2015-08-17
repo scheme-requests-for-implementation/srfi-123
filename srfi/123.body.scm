@@ -35,9 +35,57 @@
               alist)
     table))
 
+(define (pair-ref pair key)
+  (cond
+   ((eqv? car key)
+    (car pair))
+   ((eqv? cdr key)
+    (cdr pair))
+   (else
+    (list-ref pair key))))
+
+(define (pair-set! pair key value)
+  (cond
+   ((eqv? car key)
+    (set-car! pair value))
+   ((eqv? cdr key)
+    (set-cdr! pair value))
+   (else
+    (list-set! pair key value))))
+
+;;; SRFI-4 support
+
+(cond-expand
+ ((library (srfi 4))
+  (define srfi-4-getters
+    (list (cons s8vector? s8vector-ref)
+          (cons u8vector? u8vector-ref)
+          (cons s16vector? s16vector-ref)
+          (cons u16vector? u16vector-ref)
+          (cons s32vector? s32vector-ref)
+          (cons u32vector? u32vector-ref)
+          (cons s64vector? s64vector-ref)
+          (cons u64vector? u64vector-ref)))
+  (define srfi-4-setters
+    (list (cons s8vector? s8vector-set!)
+          (cons u8vector? u8vector-set!)
+          (cons s16vector? s16vector-set!)
+          (cons u16vector? u16vector-set!)
+          (cons s32vector? s32vector-set!)
+          (cons u32vector? u32vector-set!)
+          (cons s64vector? s64vector-set!)
+          (cons u64vector? u64vector-set!)))
+  (define srfi-4-types
+    (list s8vector? u8vector? s16vector? u16vector? s32vector? u32vector?
+          s64vector? u64vector?)))
+ (else
+  (define srfi-4-getters '())
+  (define srfi-4-setters '())
+  (define srfi-4-types '())))
+
 ;;; Main
 
-(define ref
+(define %ref
   (case-lambda
     ((object field)
      (let ((getter (lookup-getter object))
@@ -53,6 +101,11 @@
      (let ((getter (lookup-getter object)))
        (getter object field default)))))
 
+(define (%ref* object field . fields)
+  (if (null? fields)
+      (%ref object field)
+      (apply %ref* (%ref object field) fields)))
+
 (define-syntax set!
   (syntax-rules ()
     ((set! <place> <expression>)
@@ -62,7 +115,23 @@
             (setter (lookup-setter object)))
        (setter object <field> <value>)))))
 
-(set! (setter ref) (lambda (object field value) (set! object field value)))
+(define ref
+  (getter-with-setter
+   %ref
+   (lambda (object field value)
+     (set! object field value))))
+
+(define ref*
+  (getter-with-setter
+   %ref*
+   (rec (set!* object field rest0 . rest)
+     (if (null? rest)
+         (set! object field rest0)
+         (apply set!* (ref object field) rest0 rest)))))
+
+(define ~ ref*)
+
+(define $bracket-apply$ ref*)
 
 (define (lookup-getter object)
   (or (hashtable-ref getter-table (type-of object) #f)
@@ -80,64 +149,77 @@
 
 (define getter-table
   (alist->hashtable
-   (list (cons bytevector? bytevector-u8-ref)
-         (cons hashtable? hashtable-ref)
-         (cons pair? list-ref)
-         (cons string? string-ref)
-         (cons vector? vector-ref))))
+   (append
+    (list (cons bytevector? bytevector-u8-ref)
+          (cons hashtable? hashtable-ref)
+          (cons pair? pair-ref)
+          (cons string? string-ref)
+          (cons vector? vector-ref))
+    srfi-4-getters)))
 
 (define setter-table
   (alist->hashtable
-   (list (cons bytevector? bytevector-u8-set!)
-         (cons hashtable? hashtable-set!)
-         (cons pair? list-set!)
-         (cons string? string-set!)
-         (cons vector? vector-set!))))
+   (append
+    (list (cons bytevector? bytevector-u8-set!)
+          (cons hashtable? hashtable-set!)
+          (cons pair? pair-set!)
+          (cons string? string-set!)
+          (cons vector? vector-set!))
+    srfi-4-setters)))
 
 (define sparse-types
   (list hashtable?))
 
 (define type-list
-  (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
-        port? procedure? string? symbol? vector?))
+  (append
+   (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
+         port? procedure? string? symbol? vector?)
+   srfi-4-types))
+
+(define (register-getter-with-setter! type getter sparse?)
+  (push! type-list type)
+  (set! getter-table type getter)
+  (set! setter-table type (setter getter))
+  (when sparse?
+    (push! sparse-types type)))
 
 (define-syntax define-record-type
   (syntax-rules ()
     ((_ <name> <constructor> <pred> <field> ...)
      (begin
        (%define-record-type <name> <constructor> <pred> <field> ...)
-       (push! type-list <pred>)
-       (register-record-getter <pred> <field> ...)
-       (register-record-setter <pred> <field> ...)))))
+       (register-getter-with-setter!
+        <pred>
+        (getter-with-setter (record-getter <field> ...)
+                            (record-setter <field> ...))
+        #f)))))
 
-(define-syntax register-record-getter
+(define-syntax record-getter
   (syntax-rules ()
-    ((_ <pred> (<field> <getter> . <rest>) ...)
+    ((_ (<field> <getter> . <rest>) ...)
      (let ((getters (alist->hashtable (list (cons '<field> <getter>) ...))))
-       (define (getter record field)
+       (lambda (record field)
          (let ((getter (or (ref getters field #f)
                            (error "No such field of record." record field))))
-           (getter record field)))
-       (set! getter-table <pred> getter)))))
+           (getter record field)))))))
 
-(define-syntax register-record-setter
+(define-syntax record-setter
   (syntax-rules ()
     ((_ . <rest>)
-     (%register-record-setter () . <rest>))))
+     (%record-setter () . <rest>))))
 
-(define-syntax %register-record-setter
+(define-syntax %record-setter
   (syntax-rules ()
-    ((_ <setters> <pred> (<field> <getter>) . <rest>)
-     (%register-record-setter <setters> <pred> . <rest>))
-    ((_ <setters> <pred> (<field> <getter> <setter>) . <rest>)
-     (%register-record-setter ((<field> <setter>) . <setters>) <pred> . <rest>))
-    ((_ ((<field> <setter>) ...) <pred>)
+    ((_ <setters> (<field> <getter>) . <rest>)
+     (%record-setter <setters> . <rest>))
+    ((_ <setters> (<field> <getter> <setter>) . <rest>)
+     (%record-setter ((<field> <setter>) . <setters>) . <rest>))
+    ((_ ((<field> <setter>) ...))
      (let ((setters (alist->hashtable (list (cons '<field> <setter>) ...))))
-       (define (setter record field value)
+       (lambda (record field value)
          (let ((setter (or (ref setters field #f)
                            (error "No such assignable field of record."
                                   record field))))
-           (setter record value)))
-       (set! setter-table <pred> setter)))))
+           (setter record value)))))))
 
 ;;; generic-ref-set.body.scm ends here

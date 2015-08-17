@@ -20,9 +20,10 @@ subscribe to the list, follow
 [these instructions](http://srfi.schemers.org/srfi-list-subscribe.html).
 You can access previous messages via the mailing list
 [archive](http://srfi-email.schemers.org/srfi-123).
-  
+
   - Received: 2015/8/14
   - Draft #1 published: 2015/8/15
+
 
 Abstract
 --------
@@ -51,14 +52,27 @@ To accommodate, we define a pair of generic accessor and modifier
 operators that work through type-based dynamic dispatch: `(ref object
 field)` for access and `(set! object field value)` for modification.
 
-We believe the overhead involved in this is negligible in most
-code-bases, and furthermore a programmer can always fall back to the
+We also define a variant of `ref` that accepts chained field
+arguments: `(ref* object field1 field2 ...)`.
+
+And define `~` as a synonym to `ref*`, as well as define an SRFI-17
+setter for it: `(set! (~ object field1 field2 ...) value)`.
+
+Note that this makes `(set! object field value)` redundant in the
+strict sense, since it is served by `(set! (~ object field) value)`.
+We decide to keep this syntax anyhow since it is expected to be a very
+common use-case, for which the additional parentheses and tilde may as
+well be saved.
+
+We believe the overhead involved in the dynamic dispatch is negligible
+in most cases, and furthermore a programmer can always fall back to
 type-specific accessor and modifier procedures in performance-critical
 sections of code.
 
 The operators are specified to work on bytevectors, R6RS hashtables,
-lists, strings, vectors, and all record types.  Some notes on specific
-types:
+lists/pairs, strings, vectors, non-opaque record types, and SRFI-4
+vectors if present.  (R6RS and SRFI-99 can produce opaque record
+types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
 
 - For bytevectors, 8-bit unsigned integer operations are assumed.
   There is no obvious way to incorporate other bytevector operations
@@ -74,7 +88,9 @@ types:
     ```
 
 - For hashtables, the `ref` operator takes an optional `default`
-  argument whose semantics is akin to `hashtable-ref`.
+  argument whose semantics is akin to `hashtable-ref`.  (This is not
+  possible with `ref*`; it will always behave as when no default
+  argument is passed.)
 
     ```
     (define table (make-eqv-hashtable))
@@ -84,15 +100,14 @@ types:
     (ref table "bar")  ;error: Object has no entry for field.
     ```
 
-- Lists are supported by testing the given object for a pair.  Pairs
-  themselves are senseless to support because `(set! pair car value)`
-  contains the same number of words as `(set-car! pair value)`.  In
-  the `ref` equivalent, it even contains one word more:
-  `(ref pair car)` vs. `(car pair)`.
+- When a pair is encountered, the field argument may be the procedures
+  `car` or `cdr`, or an integer index indicating the pair should be
+  viewed as the head of a list.
 
-    ```
+    ````
+    (ref '(a b c . d) cdr)  ;=> (b c . d)
     (ref '(a b c . d) 2)  ;=> c
-    ```
+    ````
 
 - For records, the accepted values for the `field` parameter are
   symbols corresponding to the record type's field names.  The
@@ -109,55 +124,38 @@ types:
     (set! foo 'b 2)  ;error: No such assignable field of record.
     ```
 
-Alists are unfortunately impossible to support due to the lack of a
-reliable `alist?` predicate.  (It's ambiguous in that every alist is
-also a list, and any list may coincidentally have the structure of an
-alist.)
-
-A `ref*` procedure taking an arbitrary number of `field` arguments and
-walking through several collections was considered, but deemed
-sub-optimal because it doesn't play well with collections that may
-have "empty" fields (e.g. hashtables), and usually one doesn't walk
-through deep structures at once, and instead binds intermediate
-results to a variable.  Nevertheless, it is trivial to define if
-desired:
-
-    (define (ref* object field . fields)
-      (if (null? fields)
-          (ref object field)
-          (apply ref* (ref object field) fields)
-
-This might be a better candidate for SRFI-105's `$bracket-apply$` than
-regular `ref`.
+Alists are difficult to support due to the lack of a reliable `alist?`
+predicate.  (It's ambiguous in that every alist is also a list, and
+any list may coincidentally have the structure of an alist.)  It was
+considered to support non-integer keyed alists as a special case, but
+this would lead to silent code breakage when a programmer forgot about
+the API inconsistency and exchanged a non-integer key for an integer
+key in existing code.  It was also considered to drop list support in
+favor of alist support, but that idea discarded as well because the
+hypothetical `alist-set!` is an exceedingly rare operation.
+(Prepending an entry to the front, possibly hiding another entry with
+the same key, is more common.)
 
 
-Integration with SRFI-17 and SRFI-105
+Integration with SRFI-105
 -------------------------------------
 
-The `set!` operator in this SRFI does not conflict with the one in
-SRFI-17.  The reference implementation extends the SRFI-17 `set!` and
-thus supports the functionality of both SRFI-17 and the one described
-here.
-
-    (set! (car foo) bar)  ;Sets foo's car to bar.
-    (set! (car foo) bar quux)  ;Sets the bar field of the object in
-                               ;foo's car to quux.
-
-Additionally, if SRFI-17 is supported, the `ref` procedure's "setter"
-may be defined as: `(lambda (object field value) (set! object field
-value))`.  This is uninteresting in its own right, but can yield an
-interesting combination with SRFI-105.  In code that already uses
-SRFI-105 heavily, a programmer may define `$bracket-apply$` as a
-synonym to `ref`, define `:=` as a synonym to `set!`, and then use the
-following syntax: `{object[field] := value}`.
+The `ref*` procedure is a good candidate for SRFI-105's
+`$bracket-apply$`.  Indeed the reference implementation exports
+`$bracket-apply$` as a synonym to `ref*`.  In code that already uses
+SRFI-105 heavily, a programmer may additionally define `:=` as a
+synonym to `set!`, and then use the following syntax:
+`{object[field] := value}`.
 
     #!curly-infix
     (import (rename (only (scheme base) set!) (set! :=)))
-    (define $bracket-apply$ ref)
     (define vec (vector 0 1 2 3))
     {vec[1] + vec[2]}  ;=> 3
     {vec[2] := 4}
     {vec[1] + vec[2]}  ;=> 5
+
+The square brackets accept a chain of fields, since they have the
+semantics of `ref*`: `{matrix[i j]}`.
 
 
 Specification
@@ -188,18 +186,34 @@ error.
                                ;does something else.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
-vectors, and all record types.  Only hashtables are a sparse type.
-Implementations are encouraged to expand this list of types with any
-non-standard types they support.
+vectors, non-opaque record types, and SRFI-4 vectors if present.  Only
+hashtables are a sparse type.  Implementations are encouraged to
+expand this list of types with any further types they support.
 
 Valid types for `field` depend on the type of `object`.  For
-bytevectors, hashtables, strings, and vectors, refer to their
-respective `*-ref` procedures.  For pairs, refer to `list-ref`.  For
-records, symbols that correspond with the record type's field names
-are allowed.
+bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer
+to their respective `*-ref` procedures.  For pairs, refer to
+`list-ref`.  For records, symbols that correspond with the record
+type's field names are allowed.
 
-If SRFI-17 is supported, then the `ref` procedure has the following
-setter: `(lambda (object field value) (set! object field value))`
+The `ref` procedure has the following SRFI-17 setter:
+
+    (lambda (object field value) (set! object field value))
+
+- `(ref* object field field* ...)` (procedure)
+- `(~ object field field* ...)`
+
+The semantics is of this procedure is as follows:
+
+    (ref* object field)            = (ref object field)
+    (ref* object field field+ ...) = (ref* (ref object field) field+ ...)
+
+It has the following SRFI-17 setter:
+
+    (define (set!* object field rest0 . rest)
+      (if (null? rest)
+          (set! object field rest0)
+          (apply set!* (ref object field) rest0 rest)))
 
 - `(set! object field value)` (syntax)
 
@@ -211,16 +225,32 @@ hold in `field`.
 
 Note: This operator is only a syntax keyword because it overloads the
 normal `set!` syntax.  An equivalent procedure is trivial to define:
-`(lambda (object field value) (set! object field value))`.
+`(lambda (object field value) (set! object field value))`.  This
+procedure is in fact the setter of `ref`, so it can be accessed as
+`(setter ref)` when needed.
+
+The corresponding `set!*` procedure is left out, but can be accessed
+as `(setter ref*)` when needed.
+
+    (define (store-item! field-chain value)
+      (apply (setter ref*) the-store (append field-chain (list value))))
+
+- `(register-getter-with-setter! type getter sparse?)` (procedure)
+
+Registers a new type/getter/setter triple for the dynamic dispatch.
+`Type` is a type predicate, `getter` is a procedure that has a setter
+associated with it (as returned by the `getter-with-setter` procedure
+of SRFI-17), and `sparse?` is a Boolean indicating whether the type is
+a sparse type (see `ref` specification).
 
 
 Considerations when using as a library
 --------------------------------------
 
-The intent of this SRFI is to encourage Scheme systems to extend the
-semantics of their default `set!` operator in line with this SRFI.  On
-the meanwhile, it can be used as a library, but certain considerations
-apply.
+The intent of this SRFI is to encourage Scheme systems to extend their
+standard library in accordance with the above specification.  On the
+meanwhile, the reference implementation can be used as a separate
+library, but certain considerations apply.
 
 The `set!` and `define-record-type` exports of the library conflict
 with the ones in `(scheme base)`, so either have to be renamed, or
@@ -228,6 +258,15 @@ more typically, the ones from `(scheme base)` excluded.
 
 Record types not defined with the `define-record-type` exported by
 this library won't work with `ref` and `set!`.
+
+The `define-record-type` exported by this library expands to a record
+type definition followed with a command, essentially eliminating the
+"definition" status of `define-record-type`.  This means, for example,
+that you can't use it more than once (only at the end) within the
+internal definitions sequence of a body.  It's a rare use-case, but if
+you need it, you can nest each additional `define-record-type` use in
+a further `(let () ...)`.  It works fine in the top-level, since there
+definitions and commands can be interspersed.
 
 
 Implementation
