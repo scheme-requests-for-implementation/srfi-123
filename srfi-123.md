@@ -252,12 +252,19 @@ Acknowledgments
 
 Thanks to Jorgen Schäfer for inspiring me to write this SRFI and
 making the initial suggestion for the `ref` procedure and ternary
-`set!` syntax.
+`set!` syntax, as well as providing continuous input.
 
 The `ref*` procedure with its `~` synonym and SRFI-17 setter (which
 replaced the initially considered ternary `set!` syntax) seems to have
 first appeared in Gauche.  Thanks to Shiro Kawai:
 <http://blog.practical-scheme.net/gauche/20100428-shorter-names>
+
+Thanks to Evan Hanson for the idea of using a throw-away `define` in
+the expansion of `define-record-type` so as not to disturb a sequence
+of internal definitions.
+
+Thanks also to everyone else on the discussion mailing list for their
+input.
 
 
 Copyright and license
