@@ -44,7 +44,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 (set! (~ table &quot;foo&quot;) &quot;Foobar.&quot;)
 (ref table &quot;foo&quot;)  ;=&gt; &quot;Foobar.&quot;
 (ref table &quot;bar&quot;)  ;error: Object has no entry for field.</code></pre></li>
-<li><p>When a pair is encountered, the field argument may be the procedures <code>car</code> or <code>cdr</code>, or an integer index indicating the pair should be viewed as the head of a list.</p>
+<li><p>When a pair is encountered, the field argument may be the symbols <code>car</code> or <code>cdr</code>, or an integer index indicating the pair should be viewed as the head of a list.</p>
 <pre><code>(ref &#39;(a b c . d) cdr)  ;=&gt; (b c . d)
 (ref &#39;(a b c . d) 2)  ;=&gt; c</code></pre></li>
 <li><p>For records, the accepted values for the <code>field</code> parameter are symbols corresponding to the record type's field names. The overhead involved in looking up the correct accessor of modifier falls under the same rationale as other kinds of overhead involved with this SRFI.</p>

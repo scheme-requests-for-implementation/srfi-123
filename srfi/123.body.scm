@@ -37,9 +37,9 @@
 
 (define (pair-ref pair key)
   (cond
-   ((eqv? car key)
+   ((eqv? 'car key)
     (car pair))
-   ((eqv? cdr key)
+   ((eqv? 'cdr key)
     (cdr pair))
    (else
     (list-ref pair key))))

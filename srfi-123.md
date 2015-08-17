@@ -95,7 +95,7 @@ types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
     (ref table "bar")  ;error: Object has no entry for field.
     ```
 
-- When a pair is encountered, the field argument may be the procedures
+- When a pair is encountered, the field argument may be the symbols
   `car` or `cdr`, or an integer index indicating the pair should be
   viewed as the head of a list.
 
