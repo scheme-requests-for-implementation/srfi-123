@@ -28,8 +28,21 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>In some types of code-bases, accessing and modifying fields of certain collection objects (such as vectors, hashtables, or records) are ubiquitous operations. Standard Scheme APIs contain verbose procedure names specialized for each data type, which may become very tedious to type, and clutter the code.</p>
 <p>In contrast, most other languages offer very short and simple syntax for such operations, such as square bracket and dotted notation: <code>object[field]</code> and <code>object.field</code> for access; <code>object[field] = value</code> and <code>object.field = value</code> for modification.</p>
 <p>To accommodate, we define a pair of generic accessor operators that work through type-based dynamic dispatch: <code>(ref object field)</code>, and <code>(ref* object field1 field2 ...)</code> for chained access.</p>
-<p>We define <code>~</code> as a synonym to <code>ref*</code>, and define an SRFI-17 setter for it: <code>(set! (~ object field1 field2 ...) value)</code>.</p>
-<p>Plain <code>ref</code>, instead of allowing chaining, takes an optional <code>default</code> argument for objects such as hashtables: <code>(ref table key default)</code>.</p>
+<pre><code>(ref #(a b c) 1)  ;=&gt; b
+(ref* #(a (x y #u8(1 2 3)) c) 1 2 0)  ;=&gt; 1</code></pre>
+<p>We define <code>~</code> as a synonym to <code>ref*</code>, and define an SRFI-17 setter for it.</p>
+<pre><code>(define struct #(a (x y #u8(1 2 3)) c))
+(set! (~ struct 1 2 0) 4)
+struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
+<p>Plain <code>ref</code>, instead of allowing chaining, takes an optional <code>default</code> argument for objects such as hashtables.</p>
+<pre><code>(define table (make-eqv-hashtable))
+(ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
+(set! (~ table &quot;foo&quot;) &quot;Foobar.&quot;)
+(ref table &quot;foo&quot; &#39;not-found)  ;=&gt; &quot;Foobar.&quot;</code></pre>
+<p>Lack of a default argument raises an error in this case. Since <code>ref*</code> cannot take default arguments for any fields it accesses, it always raises an error when a hashtable key in the chain is not found.</p>
+<pre><code>(define table (make-eqv-hashtable))
+(define lst (list 0 1 table 3))
+(ref* lst 2 &quot;foo&quot; &#39;x)  ;error</code></pre>
 <p>We believe the overhead involved in the dynamic dispatch is negligible in most cases, and furthermore a programmer can always fall back to type-specific accessor and modifier procedures in performance-critical sections of code.</p>
 <p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
 <ul>
@@ -38,14 +51,8 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 (ref bv 2)  ;=&gt; 2
 (set! (~ bv 2) 5)
 (ref bv 2)  ;=&gt; 5</code></pre></li>
-<li><p>For hashtables, the <code>ref</code> operator takes an optional <code>default</code> argument whose semantics is akin to <code>hashtable-ref</code>. (This is not possible with <code>ref*</code>; it will always behave as when no default argument is passed.)</p>
-<pre><code>(define table (make-eqv-hashtable))
-(ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
-(set! (~ table &quot;foo&quot;) &quot;Foobar.&quot;)
-(ref table &quot;foo&quot;)  ;=&gt; &quot;Foobar.&quot;
-(ref table &quot;bar&quot;)  ;error: Object has no entry for field.</code></pre></li>
 <li><p>When a pair is encountered, the field argument may be the symbols <code>car</code> or <code>cdr</code>, or an integer index indicating the pair should be viewed as the head of a list.</p>
-<pre><code>(ref &#39;(a b c . d) cdr)  ;=&gt; (b c . d)
+<pre><code>(ref &#39;(a b c . d) &#39;cdr)  ;=&gt; (b c . d)
 (ref &#39;(a b c . d) 2)  ;=&gt; c</code></pre></li>
 <li><p>For records, the accepted values for the <code>field</code> parameter are symbols corresponding to the record type's field names. The overhead involved in looking up the correct accessor of modifier falls under the same rationale as other kinds of overhead involved with this SRFI.</p>
 <pre><code>(define-record-type &lt;foo&gt; (make-foo a b) foo?
@@ -105,8 +112,10 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>A reference implementation as a library is found in the version control repository of this SRFI.</p>
 <p>It might be desirable for Scheme systems to offer a more efficient <code>type-of</code> procedure than the one used in this implementation, which in the worst case consumes linear time with regard to the number of types (including every record type) within the system, albeit with a very small constant factor: one call to each type predicate.</p>
 <h2 id="acknowledgments">Acknowledgments</h2>
-<p>Thanks to Jorgen Schäfer for inspiring me to write this SRFI and making the initial suggestion for the <code>ref</code> procedure and ternary <code>set!</code> syntax.</p>
+<p>Thanks to Jorgen Schäfer for inspiring me to write this SRFI and making the initial suggestion for the <code>ref</code> procedure and ternary <code>set!</code> syntax, as well as providing continuous input.</p>
 <p>The <code>ref*</code> procedure with its <code>~</code> synonym and SRFI-17 setter (which replaced the initially considered ternary <code>set!</code> syntax) seems to have first appeared in Gauche. Thanks to Shiro Kawai: <a href="http://blog.practical-scheme.net/gauche/20100428-shorter-names" class="uri">http://blog.practical-scheme.net/gauche/20100428-shorter-names</a></p>
+<p>Thanks to Evan Hanson for the idea of using a throw-away <code>define</code> in the expansion of <code>define-record-type</code> so as not to disturb a sequence of internal definitions.</p>
+<p>Thanks also to everyone else on the discussion mailing list for their input.</p>
 <h2 id="copyright-and-license">Copyright and license</h2>
 <p>Copyright (C) Taylan Ulrich Bayırlı/Kammer (2015). All Rights Reserved.</p>
 <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>

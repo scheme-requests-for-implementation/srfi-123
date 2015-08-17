@@ -53,11 +53,31 @@ To accommodate, we define a pair of generic accessor operators that
 work through type-based dynamic dispatch: `(ref object field)`, and
 `(ref* object field1 field2 ...)` for chained access.
 
+    (ref #(a b c) 1)  ;=> b
+    (ref* #(a (x y #u8(1 2 3)) c) 1 2 0)  ;=> 1
+
 We define `~` as a synonym to `ref*`, and define an SRFI-17 setter for
-it: `(set! (~ object field1 field2 ...) value)`.
+it.
+
+    (define struct #(a (x y #u8(1 2 3)) c))
+    (set! (~ struct 1 2 0) 4)
+    struct  ;=> #(a (x y #u8(4 2 3)) c)
 
 Plain `ref`, instead of allowing chaining, takes an optional `default`
-argument for objects such as hashtables: `(ref table key default)`.
+argument for objects such as hashtables.
+
+    (define table (make-eqv-hashtable))
+    (ref table "foo" 'not-found)  ;=> not-found
+    (set! (~ table "foo") "Foobar.")
+    (ref table "foo" 'not-found)  ;=> "Foobar."
+
+Lack of a default argument raises an error in this case.  Since `ref*`
+cannot take default arguments for any fields it accesses, it always
+raises an error when a hashtable key in the chain is not found.
+
+    (define table (make-eqv-hashtable))
+    (define lst (list 0 1 table 3))
+    (ref* lst 2 "foo" 'x)  ;error
 
 We believe the overhead involved in the dynamic dispatch is negligible
 in most cases, and furthermore a programmer can always fall back to
@@ -80,19 +100,6 @@ types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
     (ref bv 2)  ;=> 2
     (set! (~ bv 2) 5)
     (ref bv 2)  ;=> 5
-    ```
-
-- For hashtables, the `ref` operator takes an optional `default`
-  argument whose semantics is akin to `hashtable-ref`.  (This is not
-  possible with `ref*`; it will always behave as when no default
-  argument is passed.)
-
-    ```
-    (define table (make-eqv-hashtable))
-    (ref table "foo" 'not-found)  ;=> not-found
-    (set! (~ table "foo") "Foobar.")
-    (ref table "foo")  ;=> "Foobar."
-    (ref table "bar")  ;error: Object has no entry for field.
     ```
 
 - When a pair is encountered, the field argument may be the symbols
