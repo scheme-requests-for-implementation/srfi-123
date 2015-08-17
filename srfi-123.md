@@ -100,7 +100,7 @@ types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
   viewed as the head of a list.
 
     ````
-    (ref '(a b c . d) cdr)  ;=> (b c . d)
+    (ref '(a b c . d) 'cdr)  ;=> (b c . d)
     (ref '(a b c . d) 2)  ;=> c
     ````
 
