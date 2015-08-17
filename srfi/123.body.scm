@@ -196,7 +196,7 @@
        (lambda (record field)
          (let ((getter (or (ref getters field #f)
                            (error "No such field of record." record field))))
-           (getter record field)))))))
+           (getter record)))))))
 
 (define-syntax record-setter
   (syntax-rules ()
