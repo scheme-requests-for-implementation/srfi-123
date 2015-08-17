@@ -7,6 +7,7 @@
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="http://srfi.schemers.org/srfi.css" type="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 </head>
 <body>
 <h1 id="generic-accessor-and-modifier-operators">Generic accessor and modifier operators</h1>
@@ -30,7 +31,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>And define <code>~</code> as a synonym to <code>ref*</code>, as well as define an SRFI-17 setter for it: <code>(set! (~ object field1 field2 ...) value)</code>.</p>
 <p>Note that this makes <code>(set! object field value)</code> redundant in the strict sense, since it is served by <code>(set! (~ object field) value)</code>. We decide to keep this syntax anyhow since it is expected to be a very common use-case, for which the additional parentheses and tilde may as well be saved.</p>
 <p>We believe the overhead involved in the dynamic dispatch is negligible in most cases, and furthermore a programmer can always fall back to type-specific accessor and modifier procedures in performance-critical sections of code.</p>
-<p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, and non-opaque record types. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
+<p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
 <ul>
 <li><p>For bytevectors, 8-bit unsigned integer operations are assumed. There is no obvious way to incorporate other bytevector operations into the generalized API, and a programmer is most likely to have single-byte operations in mind when using a generalized API on bytevectors.</p>
 <pre><code>(define bv (bytevector 0 1 2 3))
