@@ -42,7 +42,7 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 <p>Lack of a default argument raises an error in this case. Since <code>ref*</code> cannot take default arguments for any fields it accesses, it always raises an error when a hashtable key in the chain is not found.</p>
 <pre><code>(define table (make-eqv-hashtable))
 (define lst (list 0 1 table 3))
-(ref* lst 2 &quot;foo&quot; &#39;x)  ;error</code></pre>
+(ref* lst 2 &quot;foo&quot; &#39;x)  ;error while accessing &quot;foo&quot; from table</code></pre>
 <p>We believe the overhead involved in the dynamic dispatch is negligible in most cases, and furthermore a programmer can always fall back to type-specific accessor and modifier procedures in performance-critical sections of code.</p>
 <p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
 <ul>

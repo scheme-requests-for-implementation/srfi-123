@@ -77,7 +77,7 @@ raises an error when a hashtable key in the chain is not found.
 
     (define table (make-eqv-hashtable))
     (define lst (list 0 1 table 3))
-    (ref* lst 2 "foo" 'x)  ;error
+    (ref* lst 2 "foo" 'x)  ;error while accessing "foo" from table
 
 We believe the overhead involved in the dynamic dispatch is negligible
 in most cases, and furthermore a programmer can always fall back to
