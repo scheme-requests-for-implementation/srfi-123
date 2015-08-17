@@ -63,7 +63,7 @@ it.
     (set! (~ struct 1 2 0) 4)
     struct  ;=> #(a (x y #u8(4 2 3)) c)
 
-Plain `ref`, instead of allowing chaining, takes an optional `default`
+Plain `ref`, instead of allowing chaining, takes an optional "default"
 argument for objects such as hashtables.
 
     (define table (make-eqv-hashtable))

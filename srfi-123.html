@@ -34,7 +34,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <pre><code>(define struct #(a (x y #u8(1 2 3)) c))
 (set! (~ struct 1 2 0) 4)
 struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
-<p>Plain <code>ref</code>, instead of allowing chaining, takes an optional <code>default</code> argument for objects such as hashtables.</p>
+<p>Plain <code>ref</code>, instead of allowing chaining, takes an optional &quot;default&quot; argument for objects such as hashtables.</p>
 <pre><code>(define table (make-eqv-hashtable))
 (ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
 (set! (~ table &quot;foo&quot;) &quot;Foobar.&quot;)
