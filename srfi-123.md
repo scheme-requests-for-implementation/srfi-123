@@ -141,7 +141,7 @@ the same key, is more common.)
 
 
 Integration with SRFI-105
--------------------------------------
+-------------------------
 
 The `ref*` procedure is a good candidate for SRFI-105's
 `$bracket-apply$`.  Indeed the reference implementation exports
@@ -199,10 +199,17 @@ to their respective `*-ref` procedures.  For pairs, refer to
 `list-ref`.  For records, symbols that correspond with the record
 type's field names are allowed.
 
+The `ref` procedure has an associated SRFI-17 setter, although the one
+of `ref*` is strictly more powerful.
+
+    (define vec (vector 0 1 2))
+    (set! (ref vec 0) 3)
+    vec  ;=> #(3 1 2)
+
 - `(ref* object field field* ...)` (procedure)
 - `(~ object field field* ...)`
 
-The semantics is of this procedure is as follows:
+The semantics of this procedure is as follows:
 
     (ref* object field)            = (ref object field)
     (ref* object field field+ ...) = (ref* (ref object field) field+ ...)
@@ -225,6 +232,28 @@ Registers a new type/getter/setter triple for the dynamic dispatch.
 associated with it, and `sparse?` is a Boolean indicating whether the
 type is a sparse type (see `ref` specification).
 
+The getter will be called with two arguments: the object whose field
+should be accessed, and an object identifying the field to be
+accessed.  The setter will be called with one additional argument
+which is the value to be assigned to the given field of the given
+object.
+
+**Warning:** This procedure is strictly meant for when defining a new
+disjoint type, which isn't already handled by `ref`.  In practice,
+this means it should only be used with newly defined opaque record
+types, or types defined with some implementation-specific method
+which, unlike `define-record-type`, doesn't automatically register a
+getter and setter for the type.  If any two type predicates registered
+with the system both return true for any Scheme object, the behavior
+is undefined.  (A custom getter or setter may, however, dispatch to
+different actions based on some property of the given object, based on
+the `field` argument, or based on anything else.)
+
+It is conceivable that this method will become deprecated after a
+system has been invented which ties together the definition of a new
+opaque record type with the definitions of its getter and setter.
+This is considered outside the scope of this SRFI.
+
 
 Considerations when using as a library
 --------------------------------------
@@ -239,7 +268,7 @@ in `(scheme base)`, so either has to be renamed, or more typically,
 the one from `(scheme base)` excluded.
 
 Record types not defined with the `define-record-type` exported by
-this library won't work with `ref` and `ref*`.
+this library won't work with `ref`, `ref*`, or their setters.
 
 
 Implementation
@@ -264,12 +293,17 @@ making the initial suggestion for the `ref` procedure and ternary
 
 The `ref*` procedure with its `~` synonym and SRFI-17 setter (which
 replaced the initially considered ternary `set!` syntax) seems to have
-first appeared in Gauche.  Thanks to Shiro Kawai:
+first appeared in Gauche.  Thanks to Shiro Kawai and Issac Trotts:
 <http://blog.practical-scheme.net/gauche/20100428-shorter-names>
 
 Thanks to Evan Hanson for the idea of using a throw-away `define` in
 the expansion of `define-record-type` so as not to disturb a sequence
 of internal definitions.
+
+Thanks to Vincent St-Amour, Eli Barzilay, and others in the Racket IRC
+channel for raising my awareness against action-at-a-distance bugs
+that might result from abuse of the imperative
+`register-getter-with-setter!`.
 
 Thanks also to everyone else on the discussion mailing list for their
 input.
