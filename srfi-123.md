@@ -199,7 +199,8 @@ to their respective `*-ref` procedures.  For pairs, refer to
 `list-ref`.  For records, symbols that correspond with the record
 type's field names are allowed.
 
-The `ref` procedure has an associated SRFI-17 setter.
+The `ref` procedure has an associated SRFI-17 setter, although the one
+of `ref*` is strictly more powerful.
 
     (define vec (vector 0 1 2))
     (set! (ref vec 0) 3)
