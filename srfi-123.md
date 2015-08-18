@@ -286,7 +286,7 @@ making the initial suggestion for the `ref` procedure and ternary
 
 The `ref*` procedure with its `~` synonym and SRFI-17 setter (which
 replaced the initially considered ternary `set!` syntax) seems to have
-first appeared in Gauche.  Thanks to Shiro Kawai:
+first appeared in Gauche.  Thanks to Shiro Kawai and Issac Trotts:
 <http://blog.practical-scheme.net/gauche/20100428-shorter-names>
 
 Thanks to Evan Hanson for the idea of using a throw-away `define` in
