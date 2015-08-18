@@ -267,7 +267,7 @@ in `(scheme base)`, so either has to be renamed, or more typically,
 the one from `(scheme base)` excluded.
 
 Record types not defined with the `define-record-type` exported by
-this library won't work with `ref` and `ref*`.
+this library won't work with `ref`, `ref*`, or their setters.
 
 
 Implementation
