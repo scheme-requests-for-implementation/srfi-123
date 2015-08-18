@@ -89,6 +89,10 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
                            ;does something else.</code></pre>
 <p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
 <p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
+<p>The <code>ref</code> procedure has an associated SRFI-17 setter.</p>
+<pre><code>(define vec (vector 0 1 2))
+(set! (ref vec 0) 3)
+vec  ;=&gt; #(3 1 2)</code></pre>
 <ul>
 <li><code>(ref* object field field* ...)</code> (procedure)</li>
 <li><code>(~ object field field* ...)</code></li>
