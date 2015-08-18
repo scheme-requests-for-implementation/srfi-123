@@ -202,7 +202,7 @@ type's field names are allowed.
 - `(ref* object field field* ...)` (procedure)
 - `(~ object field field* ...)`
 
-The semantics is of this procedure is as follows:
+The semantics of this procedure is as follows:
 
     (ref* object field)            = (ref object field)
     (ref* object field field+ ...) = (ref* (ref object field) field+ ...)

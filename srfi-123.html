@@ -93,7 +93,7 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 <li><code>(ref* object field field* ...)</code> (procedure)</li>
 <li><code>(~ object field field* ...)</code></li>
 </ul>
-<p>The semantics is of this procedure is as follows:</p>
+<p>The semantics of this procedure is as follows:</p>
 <pre><code>(ref* object field)            = (ref object field)
 (ref* object field field+ ...) = (ref* (ref object field) field+ ...)</code></pre>
 <p>It has an associated SRFI-17 setter, which does the expected thing:</p>
