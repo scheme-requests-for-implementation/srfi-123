@@ -141,7 +141,7 @@ the same key, is more common.)
 
 
 Integration with SRFI-105
--------------------------------------
+-------------------------
 
 The `ref*` procedure is a good candidate for SRFI-105's
 `$bracket-apply$`.  Indeed the reference implementation exports
