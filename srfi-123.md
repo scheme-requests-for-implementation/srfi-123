@@ -225,6 +225,28 @@ Registers a new type/getter/setter triple for the dynamic dispatch.
 associated with it, and `sparse?` is a Boolean indicating whether the
 type is a sparse type (see `ref` specification).
 
+The getter will be called with two arguments: the object whose field
+should be accessed, and an object identifying the field to be
+accessed.  The setter will be called with one additional argument
+which is the value to be assigned to the given field of the given
+object.
+
+**Warning:** This procedure is strictly meant for when defining a new
+disjoint type, which isn't already handled by `ref`.  In practice,
+this means it should only be used with newly defined opaque record
+types, or types defined with some implementation-specific method
+which, unlike `define-record-type`, doesn't automatically register a
+getter and setter for the type.  If any two type predicates registered
+with the system both return true for any Scheme object, the behavior
+is undefined.  (A custom getter or setter may, however, dispatch to
+different actions based on some property of the given object, based on
+the `field` argument, or based on anything else.)
+
+It is conceivable that this method will become deprecated after a
+system has been invented which ties together the definition of a new
+opaque record type with the definitions of its getter and setter.
+This is considered outside the scope of this SRFI.
+
 
 Considerations when using as a library
 --------------------------------------
@@ -270,6 +292,11 @@ first appeared in Gauche.  Thanks to Shiro Kawai:
 Thanks to Evan Hanson for the idea of using a throw-away `define` in
 the expansion of `define-record-type` so as not to disturb a sequence
 of internal definitions.
+
+Thanks to Vincent St-Amour, Eli Barzilay, and others in the Racket IRC
+channel for raising my awareness against action-at-a-distance bugs
+that might result from abuse of the imperative
+`register-getter-with-setter!`.
 
 Thanks also to everyone else on the discussion mailing list for their
 input.
