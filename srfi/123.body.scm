@@ -191,7 +191,8 @@
            (getter-with-setter (record-getter <field> ...)
                                (record-setter <field> ...))
            #f)
-          #f))))))
+          ;; Return the implementation's preferred "unspecified" value.
+          (if #f #f)))))))
 
 (define-syntax record-getter
   (syntax-rules ()
