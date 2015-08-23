@@ -46,9 +46,9 @@
 
 (define (pair-set! pair key value)
   (cond
-   ((eqv? car key)
+   ((eqv? 'car key)
     (set-car! pair value))
-   ((eqv? cdr key)
+   ((eqv? 'cdr key)
     (set-cdr! pair value))
    (else
     (list-set! pair key value))))
