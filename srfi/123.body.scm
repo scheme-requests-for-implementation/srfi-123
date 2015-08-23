@@ -46,14 +46,19 @@
 
 (define (pair-set! pair key value)
   (cond
-   ((eqv? car key)
+   ((eqv? 'car key)
     (set-car! pair value))
-   ((eqv? cdr key)
+   ((eqv? 'cdr key)
     (set-cdr! pair value))
    (else
     (list-set! pair key value))))
 
 ;;; SRFI-4 support
+
+;;; In some implementations, SRFI-4 vectors are also bytevectors.  We accomodate
+;;; for those implementations by using generic bytevector-ref/set! procedures
+;;; which possibly dispatch to an SRFI-4 type's getter/setter, but also
+;;; inserting the SRFI-4 getters/setters into the top-level dispatch tables.
 
 (cond-expand
  ((library (srfi 4))
@@ -77,11 +82,23 @@
           (cons u64vector? u64vector-set!)))
   (define srfi-4-types
     (list s8vector? u8vector? s16vector? u16vector? s32vector? u32vector?
-          s64vector? u64vector?)))
+          s64vector? u64vector?))
+  (define srfi-4-getters-table (alist->hashtable srfi-4-getters))
+  (define srfi-4-setters-table (alist->hashtable srfi-4-setters))
+  (define (bytevector-ref bytevector index)
+    (let* ((type (find (lambda (pred) (pred bytevector))) srfi-4-types)
+           (getter (ref srfi-4-getters-table type bytevector-u8-ref)))
+      (getter bytevector index)))
+  (define (bytevector-set! bytevector index value)
+    (let* ((type (find (lambda (pred) (pred bytevector))) srfi-4-types)
+           (setter (ref srfi-4-setters-table type bytevector-u8-set!)))
+      (setter bytevector index value))))
  (else
   (define srfi-4-getters '())
   (define srfi-4-setters '())
-  (define srfi-4-types '())))
+  (define srfi-4-types '())
+  (define bytevector-ref bytevector-u8-ref)
+  (define bytevector-set! bytevector-u8-set!)))
 
 ;;; Main
 
@@ -145,7 +162,7 @@
 (define getter-table
   (alist->hashtable
    (append
-    (list (cons bytevector? bytevector-u8-ref)
+    (list (cons bytevector? bytevector-ref)
           (cons hashtable? hashtable-ref)
           (cons pair? pair-ref)
           (cons string? string-ref)
@@ -155,7 +172,7 @@
 (define setter-table
   (alist->hashtable
    (append
-    (list (cons bytevector? bytevector-u8-set!)
+    (list (cons bytevector? bytevector-set!)
           (cons hashtable? hashtable-set!)
           (cons pair? pair-set!)
           (cons string? string-set!)
@@ -191,7 +208,8 @@
            (getter-with-setter (record-getter <field> ...)
                                (record-setter <field> ...))
            #f)
-          #f))))))
+          ;; Return the implementation's preferred "unspecified" value.
+          (if #f #f)))))))
 
 (define-syntax record-getter
   (syntax-rules ()
