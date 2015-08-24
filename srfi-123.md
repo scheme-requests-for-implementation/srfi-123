@@ -59,7 +59,7 @@ work through type-based dynamic dispatch: `(ref object field)`, and
     (ref #(a b c) 1)  ;=> b
     (ref* #(a (x y #u8(1 2 3)) c) 1 2 0)  ;=> 1
 
-We define `~` as a synonym to `ref*`, and define an SRFI-17 setter for
+We define `~` as a synonym to `ref*`, and define a SRFI-17 setter for
 it.
 
     (define struct #(a (x y #u8(1 2 3)) c))

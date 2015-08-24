@@ -33,7 +33,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <p>To accommodate, we define a pair of generic accessor operators that work through type-based dynamic dispatch: <code>(ref object field)</code>, and <code>(ref* object field1 field2 ...)</code> for chained access.</p>
 <pre><code>(ref #(a b c) 1)  ;=&gt; b
 (ref* #(a (x y #u8(1 2 3)) c) 1 2 0)  ;=&gt; 1</code></pre>
-<p>We define <code>~</code> as a synonym to <code>ref*</code>, and define an SRFI-17 setter for it.</p>
+<p>We define <code>~</code> as a synonym to <code>ref*</code>, and define a SRFI-17 setter for it.</p>
 <pre><code>(define struct #(a (x y #u8(1 2 3)) c))
 (set! (~ struct 1 2 0) 4)
 struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
