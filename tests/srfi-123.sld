@@ -22,11 +22,15 @@
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (define-library (tests srfi-123)
+  (export run-tests)
   (import (except (scheme base) define-record-type set!)
           (r6rs hashtables)
           (srfi 64)
           (srfi 123))
-  (export run-tests)
+  (cond-expand
+   ((library (srfi 4))
+    (import (srfi 4)))
+   (else))
   (begin
 
     (define-record-type <foo> (make-foo a b) foo?
