@@ -106,6 +106,18 @@ types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
     (ref bv 2)  ;=> 5
     ```
 
+- However, some implementations provide SRFI-4 vectors by tagging
+  bytevectors, such that SRFI-4 vectors are not disjoint types from
+  bytevectors.  In that case, the SRFI-4 type of the bytevector
+  dictates the semantics.
+
+    ```
+    (define bv (s16vector 0 1 2 3))
+    (bytevector? bv)  ;=> #t
+    (bytevector-u8-ref bv 2)  ;=> (result depends on endianness)
+    (ref bv 2)  ;=> 2
+    ```
+
 - When a pair is encountered, the field argument may be the symbols
   `car` or `cdr`, or an integer index indicating the pair should be
   viewed as the head of a list.
@@ -201,6 +213,10 @@ bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer
 to their respective `*-ref` procedures.  For pairs, refer to
 `list-ref`.  For records, symbols that correspond with the record
 type's field names are allowed.
+
+A conforming implementation must be prepared for SRFI-4 vector types
+and bytevectors not being disjoint types, and treat SRFI-4 vectors
+suitably and not as regular bytevectors.
 
 The `ref` procedure has an associated SRFI-17 setter, although the one
 of `ref*` is strictly more powerful.

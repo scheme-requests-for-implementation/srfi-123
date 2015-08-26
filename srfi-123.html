@@ -55,6 +55,11 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 (ref bv 2)  ;=&gt; 2
 (set! (~ bv 2) 5)
 (ref bv 2)  ;=&gt; 5</code></pre></li>
+<li><p>However, some implementations provide SRFI-4 vectors by tagging bytevectors, such that SRFI-4 vectors are not disjoint types from bytevectors. In that case, the SRFI-4 type of the bytevector dictates the semantics.</p>
+<pre><code>(define bv (s16vector 0 1 2 3))
+(bytevector? bv)  ;=&gt; #t
+(bytevector-u8-ref bv 2)  ;=&gt; (result depends on endianness)
+(ref bv 2)  ;=&gt; 2</code></pre></li>
 <li><p>When a pair is encountered, the field argument may be the symbols <code>car</code> or <code>cdr</code>, or an integer index indicating the pair should be viewed as the head of a list.</p>
 <pre><code>(ref &#39;(a b c . d) &#39;cdr)  ;=&gt; (b c . d)
 (ref &#39;(a b c . d) 2)  ;=&gt; c</code></pre></li>
@@ -92,6 +97,7 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
                            ;does something else.</code></pre>
 <p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
 <p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
+<p>A conforming implementation must be prepared for SRFI-4 vector types and bytevectors not being disjoint types, and treat SRFI-4 vectors suitably and not as regular bytevectors.</p>
 <p>The <code>ref</code> procedure has an associated SRFI-17 setter, although the one of <code>ref*</code> is strictly more powerful.</p>
 <pre><code>(define vec (vector 0 1 2))
 (set! (ref vec 0) 3)
