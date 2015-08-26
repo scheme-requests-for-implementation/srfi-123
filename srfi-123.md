@@ -28,6 +28,7 @@ You can access previous messages via the mailing list
   - Draft #4 published: 2015/8/18
   - Draft #5 published: 2015/8/23 (code changes only)
   - Draft #6 published: 2015/8/24
+  - Draft #7 published: 2015/8/26
 
 
 Abstract

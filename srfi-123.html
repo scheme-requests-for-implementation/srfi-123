@@ -25,6 +25,7 @@ class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the 
 <li>Draft #4 published: 2015/8/18</li>
 <li>Draft #5 published: 2015/8/23 (code changes only)</li>
 <li>Draft #6 published: 2015/8/24</li>
+<li>Draft #7 published: 2015/8/26</li>
 </ul>
 <h2 id="abstract">Abstract</h2>
 <p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary &quot;collection&quot; objects. We fill this gap for Scheme by defining generalized accessors, and an associated SRFI-17 setter.</p>
@@ -130,7 +131,7 @@ vec  ;=&gt; #(3 1 2)</code></pre>
 <p>It might be desirable for Scheme systems to offer a more efficient <code>type-of</code> procedure than the one used in this implementation, which in the worst case consumes linear time with regard to the number of types (including every record type) within the system, albeit with a very small constant factor: one call to each type predicate.</p>
 <h2 id="acknowledgments">Acknowledgments</h2>
 <p>Thanks to Jorgen Schäfer for inspiring me to write this SRFI and making the initial suggestion for the <code>ref</code> procedure and ternary <code>set!</code> syntax, as well as providing continuous input.</p>
-<p>The <code>ref*</code> procedure with its <code>~</code> synonym and SRFI-17 setter (which replaced the initially considered ternary <code>set!</code> syntax) seems to have first appeared in Gauche. Thanks to Shiro Kawai and Issac Trotts: <a href="http://blog.practical-scheme.net/gauche/20100428-shorter-names">http://blog.practical-scheme.net/gauche/20100428-shorter-names</a></p>
+<p>The <code>ref*</code> procedure with its <code>~</code> synonym and SRFI-17 setter (which replaced the initially considered ternary <code>set!</code> syntax) seems to have first appeared in Gauche. Thanks to Shiro Kawai and Issac Trotts: <a href="http://blog.practical-scheme.net/gauche/20100428-shorter-names" class="uri">http://blog.practical-scheme.net/gauche/20100428-shorter-names</a></p>
 <p>Thanks to Evan Hanson for the idea of using a throw-away <code>define</code> in the expansion of <code>define-record-type</code> so as not to disturb a sequence of internal definitions.</p>
 <p>Thanks to Vincent St-Amour, Eli Barzilay, and others in the Racket IRC channel for raising my awareness against action-at-a-distance bugs that might result from abuse of the imperative <code>register-getter-with-setter!</code>.</p>
 <p>Thanks also to everyone else on the discussion mailing list for their input.</p>
