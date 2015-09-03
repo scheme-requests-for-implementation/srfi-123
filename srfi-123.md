@@ -260,13 +260,13 @@ which is the value to be assigned to the given field of the given
 object.
 
 **Warning:** This procedure is strictly meant for when defining a new
-disjoint type, which isn't already handled by `ref`.  In practice,
-this means it should only be used with newly defined opaque record
-types, or types defined with some implementation-specific method
-which, unlike `define-record-type`, doesn't automatically register a
-getter and setter for the type.  If any two type predicates registered
-with the system both return true for any Scheme object, the behavior
-is undefined.  (A custom getter or setter may, however, dispatch to
+disjoint type which isn't already handled by `ref`.  In practice, this
+means it should only be used with newly defined opaque record types,
+or types defined with some implementation-specific method which,
+unlike `define-record-type`, doesn't automatically register a getter
+and setter for the type.  If any two type predicates registered with
+the system both return true for any Scheme object, the behavior is
+undefined.  (A custom getter or setter may, however, dispatch to
 different actions based on some property of the given object, based on
 the `field` argument, or based on anything else.)
 
