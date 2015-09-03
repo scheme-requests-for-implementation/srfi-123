@@ -76,9 +76,9 @@ argument for objects such as hashtables.
     (set! (~ table "foo") "Foobar.")
     (ref table "foo" 'not-found)  ;=> "Foobar."
 
-Lack of a default argument raises an error in this case.  Since `ref*`
-cannot take default arguments for any fields it accesses, it always
-raises an error when a hashtable key in the chain is not found.
+Lack of a default argument is an error in this case.  Since `ref*`
+cannot take default arguments for any fields it accesses, it is an
+error when a hashtable key in the chain is not found.
 
     (define table (make-eqv-hashtable))
     (define lst (list 0 1 table 3))
@@ -180,29 +180,30 @@ semantics of `ref*`: `{matrix[i j]}`.
 Specification
 -------------
 
+Within this section, whenever a situation is described as being an
+error, a Scheme implementation supporting error signaling should
+signal an error.
+
 - `(ref object field)` (procedure)
 - `(ref object field default)`
 
-Returns the value for `field` in `object`.  An error is raised if
-`object` has no field identified by `field`.  (This error will often
-come from the underlying accessor procedure.)
+Returns the value for `field` in `object`.  It is an error if `object`
+has no field identified by `field`.
 
     (ref #(0 1 2) 3)  ;error: vector-ref: Index out of bounds.
 
 If `object` is of a "sparse" type, meaning its fields can be "empty"
 or "unassigned" (e.g. a hashtable), and the requested field is empty,
-then the value of `default` is returned if given, and otherwise an
-error raised.
+then the value of `default` is returned.  It is an error if the
+`default` argument is not provided in this case.
 
     (ref hashtable unassigned-key 'default)  ;=> default
     (ref hashtable unassigned-key)  ;error
 
-If `object` is not of a sparse type, then passing `default` is an
-error.
+If `object` is not of a sparse type, then providing the `default`
+argument is an error.
 
     (ref '(0 1 2) 3 'default)  ;error: list-ref: Too many arguments.
-                               ;Unless the implementation's list-ref
-                               ;does something else.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
 vectors, non-opaque record types, and SRFI-4 vectors if present.  Only

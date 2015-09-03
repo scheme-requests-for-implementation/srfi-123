@@ -44,7 +44,7 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 (ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
 (set! (~ table &quot;foo&quot;) &quot;Foobar.&quot;)
 (ref table &quot;foo&quot; &#39;not-found)  ;=&gt; &quot;Foobar.&quot;</code></pre>
-<p>Lack of a default argument raises an error in this case. Since <code>ref*</code> cannot take default arguments for any fields it accesses, it always raises an error when a hashtable key in the chain is not found.</p>
+<p>Lack of a default argument is an error in this case. Since <code>ref*</code> cannot take default arguments for any fields it accesses, it is an error when a hashtable key in the chain is not found.</p>
 <pre><code>(define table (make-eqv-hashtable))
 (define lst (list 0 1 table 3))
 (ref* lst 2 &quot;foo&quot; &#39;x)  ;error while accessing &quot;foo&quot; from table</code></pre>
@@ -83,19 +83,18 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 {vec[1] + vec[2]}  ;=&gt; 5</code></pre>
 <p>The square brackets accept a chain of fields, since they have the semantics of <code>ref*</code>: <code>{matrix[i j]}</code>.</p>
 <h2 id="specification">Specification</h2>
+<p>Within this section, whenever a situation is described as being an error, a Scheme implementation supporting error signaling should signal an error.</p>
 <ul>
 <li><code>(ref object field)</code> (procedure)</li>
 <li><code>(ref object field default)</code></li>
 </ul>
-<p>Returns the value for <code>field</code> in <code>object</code>. An error is raised if <code>object</code> has no field identified by <code>field</code>. (This error will often come from the underlying accessor procedure.)</p>
+<p>Returns the value for <code>field</code> in <code>object</code>. It is an error if <code>object</code> has no field identified by <code>field</code>.</p>
 <pre><code>(ref #(0 1 2) 3)  ;error: vector-ref: Index out of bounds.</code></pre>
-<p>If <code>object</code> is of a &quot;sparse&quot; type, meaning its fields can be &quot;empty&quot; or &quot;unassigned&quot; (e.g. a hashtable), and the requested field is empty, then the value of <code>default</code> is returned if given, and otherwise an error raised.</p>
+<p>If <code>object</code> is of a &quot;sparse&quot; type, meaning its fields can be &quot;empty&quot; or &quot;unassigned&quot; (e.g. a hashtable), and the requested field is empty, then the value of <code>default</code> is returned. It is an error if the <code>default</code> argument is not provided in this case.</p>
 <pre><code>(ref hashtable unassigned-key &#39;default)  ;=&gt; default
 (ref hashtable unassigned-key)  ;error</code></pre>
-<p>If <code>object</code> is not of a sparse type, then passing <code>default</code> is an error.</p>
-<pre><code>(ref &#39;(0 1 2) 3 &#39;default)  ;error: list-ref: Too many arguments.
-                           ;Unless the implementation&#39;s list-ref
-                           ;does something else.</code></pre>
+<p>If <code>object</code> is not of a sparse type, then providing the <code>default</code> argument is an error.</p>
+<pre><code>(ref &#39;(0 1 2) 3 &#39;default)  ;error: list-ref: Too many arguments.</code></pre>
 <p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
 <p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, refer to <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
 <p>A conforming implementation must be prepared for SRFI-4 vector types and bytevectors not being disjoint types, and treat SRFI-4 vectors suitably and not as regular bytevectors.</p>
