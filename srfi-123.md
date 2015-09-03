@@ -291,6 +291,9 @@ the one from `(scheme base)` excluded.
 Record types not defined with the `define-record-type` exported by
 this library won't work with `ref`, `ref*`, or their setters.
 
+This problem does not apply to implementations supporting inspection
+of records and record types.
+
 
 Implementation
 --------------

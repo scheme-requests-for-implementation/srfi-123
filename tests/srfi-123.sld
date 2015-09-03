@@ -28,6 +28,18 @@
           (srfi 64)
           (srfi 123))
   (cond-expand
+   ((library (srfi 99))
+    (import (srfi 99)))
+   ((library (rnrs records inspection))
+    (import (rnrs records syntactic))
+    (import (rnrs records procedural)))
+    (import (rnrs records inspection))
+   ((library (r6rs records inspection))
+    (import (r6rs records syntactic))
+    (import (r6rs records procedural)))
+    (import (r6rs records inspection))
+   (else))
+  (cond-expand
    ((library (srfi 4))
     (import (srfi 4)))
    (else))

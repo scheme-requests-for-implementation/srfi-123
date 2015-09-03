@@ -125,6 +125,7 @@ vec  ;=&gt; #(3 1 2)</code></pre>
 <p>The intent of this SRFI is to encourage Scheme systems to extend their standard library in accordance with the above specification. On the meanwhile, the sample implementation can be used as a separate library, but certain considerations apply.</p>
 <p>The <code>define-record-type</code> export of the library conflicts with the one in <code>(scheme base)</code>, so either has to be renamed, or more typically, the one from <code>(scheme base)</code> excluded.</p>
 <p>Record types not defined with the <code>define-record-type</code> exported by this library won't work with <code>ref</code>, <code>ref*</code>, or their setters.</p>
+<p>This problem does not apply to implementations supporting inspection of records and record types.</p>
 <h2 id="implementation">Implementation</h2>
 <p>A sample implementation as a library is found in the version control repository of this SRFI.</p>
 <p>It might be desirable for Scheme systems to offer a more efficient <code>type-of</code> procedure than the one used in this implementation, which in the worst case consumes linear time with regard to the number of types (including every record type) within the system, albeit with a very small constant factor: one call to each type predicate.</p>
