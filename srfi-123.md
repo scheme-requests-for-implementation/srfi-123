@@ -160,7 +160,7 @@ Integration with SRFI-105
 -------------------------
 
 The `ref*` procedure is a good candidate for SRFI-105's
-`$bracket-apply$`.  Indeed the reference implementation exports
+`$bracket-apply$`.  Indeed the sample implementation exports
 `$bracket-apply$` as a synonym to `ref*`.  In code that already uses
 SRFI-105 heavily, a programmer may additionally define `:=` as a
 synonym to `set!`, and then use the following syntax:
@@ -281,7 +281,7 @@ Considerations when using as a library
 
 The intent of this SRFI is to encourage Scheme systems to extend their
 standard library in accordance with the above specification.  On the
-meanwhile, the reference implementation can be used as a separate
+meanwhile, the sample implementation can be used as a separate
 library, but certain considerations apply.
 
 The `define-record-type` export of the library conflicts with the one
@@ -295,8 +295,8 @@ this library won't work with `ref`, `ref*`, or their setters.
 Implementation
 --------------
 
-A reference implementation as a library is found in the version
-control repository of this SRFI.
+A sample implementation as a library is found in the version control
+repository of this SRFI.
 
 It might be desirable for Scheme systems to offer a more efficient
 `type-of` procedure than the one used in this implementation, which in
