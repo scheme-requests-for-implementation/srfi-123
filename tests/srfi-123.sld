@@ -42,7 +42,10 @@
   (cond-expand
    ((library (srfi 4))
     (import (srfi 4)))
-   (else))
+   (else
+    (begin
+      ;; Stub to silence compilers.
+      (define s16vector #f))))
   (begin
 
     (define-record-type <foo> (make-foo a b) foo?
