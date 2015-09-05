@@ -69,7 +69,9 @@
           (test-assert "string" (char=? #\b (ref "abc" 1)))
           (test-assert "vector" (= 1 (ref (vector 0 1 2) 1)))
           (test-assert "record" (= 1 (ref (make-foo 0 1) 'b)))
-          (test-skip (cond-expand ((library (srfi 4)) 0) (else 1)))
+          (cond-expand
+           ((library (srfi 4)) (values))
+           (else               (test-skip 1)))
           (test-assert "srfi-4" (= 1 (ref (s16vector 0 1 2) 1)))
           (test-end "ref")
 
@@ -99,7 +101,9 @@
                                   (= 2 (ref r 'a))))
           (test-assert "bad record assignment"
             (not (guard (err (else #f)) (set! (ref (make-foo 0 1) 'b) 2) #t)))
-          (test-skip (cond-expand ((library (srfi 4)) 0) (else 1)))
+          (cond-expand
+           ((library (srfi 4)) (values))
+           (else               (test-skip 1)))
           (test-assert "srfi-4" (let ((s16v (s16vector 0 1 2)))
                                   (set! (ref s16v 1) 3)
                                   (= 3 (ref s16v 1))))
