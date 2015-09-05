@@ -76,9 +76,9 @@ argument for objects such as hashtables.
     (set! (~ table "foo") "Foobar.")
     (ref table "foo" 'not-found)  ;=> "Foobar."
 
-Lack of a default argument raises an error in this case.  Since `ref*`
-cannot take default arguments for any fields it accesses, it always
-raises an error when a hashtable key in the chain is not found.
+Lack of a default argument is an error in this case.  Since `ref*`
+cannot take default arguments for any fields it accesses, it is an
+error when a hashtable key in the chain is not found.
 
     (define table (make-eqv-hashtable))
     (define lst (list 0 1 table 3))
@@ -160,7 +160,7 @@ Integration with SRFI-105
 -------------------------
 
 The `ref*` procedure is a good candidate for SRFI-105's
-`$bracket-apply$`.  Indeed the reference implementation exports
+`$bracket-apply$`.  Indeed the sample implementation exports
 `$bracket-apply$` as a synonym to `ref*`.  In code that already uses
 SRFI-105 heavily, a programmer may additionally define `:=` as a
 synonym to `set!`, and then use the following syntax:
@@ -180,29 +180,30 @@ semantics of `ref*`: `{matrix[i j]}`.
 Specification
 -------------
 
+Within this section, whenever a situation is described as being an
+error, a Scheme implementation supporting error signaling should
+signal an error.
+
 - `(ref object field)` (procedure)
 - `(ref object field default)`
 
-Returns the value for `field` in `object`.  An error is raised if
-`object` has no field identified by `field`.  (This error will often
-come from the underlying accessor procedure.)
+Returns the value for `field` in `object`.  It is an error if `object`
+has no field identified by `field`.
 
     (ref #(0 1 2) 3)  ;error: vector-ref: Index out of bounds.
 
 If `object` is of a "sparse" type, meaning its fields can be "empty"
 or "unassigned" (e.g. a hashtable), and the requested field is empty,
-then the value of `default` is returned if given, and otherwise an
-error raised.
+then the value of `default` is returned.  It is an error if the
+`default` argument is not provided in this case.
 
     (ref hashtable unassigned-key 'default)  ;=> default
     (ref hashtable unassigned-key)  ;error
 
-If `object` is not of a sparse type, then passing `default` is an
-error.
+If `object` is not of a sparse type, then providing the `default`
+argument is an error.
 
     (ref '(0 1 2) 3 'default)  ;error: list-ref: Too many arguments.
-                               ;Unless the implementation's list-ref
-                               ;does something else.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
 vectors, non-opaque record types, and SRFI-4 vectors if present.  Only
@@ -259,13 +260,13 @@ which is the value to be assigned to the given field of the given
 object.
 
 **Warning:** This procedure is strictly meant for when defining a new
-disjoint type, which isn't already handled by `ref`.  In practice,
-this means it should only be used with newly defined opaque record
-types, or types defined with some implementation-specific method
-which, unlike `define-record-type`, doesn't automatically register a
-getter and setter for the type.  If any two type predicates registered
-with the system both return true for any Scheme object, the behavior
-is undefined.  (A custom getter or setter may, however, dispatch to
+disjoint type which isn't already handled by `ref`.  In practice, this
+means it should only be used with newly defined opaque record types,
+or types defined with some implementation-specific method which,
+unlike `define-record-type`, doesn't automatically register a getter
+and setter for the type.  If any two type predicates registered with
+the system both return true for any Scheme object, the behavior is
+undefined.  (A custom getter or setter may, however, dispatch to
 different actions based on some property of the given object, based on
 the `field` argument, or based on anything else.)
 
@@ -280,7 +281,7 @@ Considerations when using as a library
 
 The intent of this SRFI is to encourage Scheme systems to extend their
 standard library in accordance with the above specification.  On the
-meanwhile, the reference implementation can be used as a separate
+meanwhile, the sample implementation can be used as a separate
 library, but certain considerations apply.
 
 The `define-record-type` export of the library conflicts with the one
@@ -290,12 +291,15 @@ the one from `(scheme base)` excluded.
 Record types not defined with the `define-record-type` exported by
 this library won't work with `ref`, `ref*`, or their setters.
 
+This problem does not apply to implementations supporting inspection
+of records and record types.
+
 
 Implementation
 --------------
 
-A reference implementation as a library is found in the version
-control repository of this SRFI.
+A sample implementation as a library is found in the version control
+repository of this SRFI.
 
 It might be desirable for Scheme systems to offer a more efficient
 `type-of` procedure than the one used in this implementation, which in

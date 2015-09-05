@@ -53,6 +53,36 @@
    (else
     (list-set! pair key value))))
 
+;;; Record inspection support
+
+(cond-expand
+ ((or (library (srfi 99))
+      (library (rnrs records inspection))
+      (library (r6rs records inspection)))
+  (cond-expand
+   ((not (library (srfi 99)))
+    (define rtd-accessor record-accessor)
+    (define rtd-mutator record-mutator))
+   (else))
+  (define (record-ref record field)
+    (let* ((rtd (record-rtd record))
+           (accessor (rtd-accessor rtd field)))
+      (accessor record)))
+  (define (record-set! record field value)
+    (let* ((rtd (record-rtd record))
+           (mutator (rtd-mutator rtd field)))
+      (mutator record value)))
+  (define record-getters
+    (list (cons record? record-ref)))
+  (define record-setters
+    (list (cons record? record-set!)))
+  (define record-types
+    (list record?)))
+ (else
+  (define record-getters '())
+  (define record-setters '())
+  (define record-types '())))
+
 ;;; SRFI-4 support
 
 ;;; In some implementations, SRFI-4 vectors are also bytevectors.  We accomodate
@@ -87,11 +117,15 @@
   (define srfi-4-setters-table (alist->hashtable srfi-4-setters))
   (define (bytevector-ref bytevector index)
     (let* ((type (find (lambda (pred) (pred bytevector))) srfi-4-types)
-           (getter (ref srfi-4-getters-table type bytevector-u8-ref)))
+           (getter (if type
+                       (ref srfi-4-getters-table type)
+                       bytevector-u8-ref)))
       (getter bytevector index)))
   (define (bytevector-set! bytevector index value)
     (let* ((type (find (lambda (pred) (pred bytevector))) srfi-4-types)
-           (setter (ref srfi-4-setters-table type bytevector-u8-set!)))
+           (setter (if type
+                       (ref srfi-4-setters-table type)
+                       bytevector-u8-set!)))
       (setter bytevector index value))))
  (else
   (define srfi-4-getters '())
@@ -167,6 +201,7 @@
           (cons pair? pair-ref)
           (cons string? string-ref)
           (cons vector? vector-ref))
+    record-getters
     srfi-4-getters)))
 
 (define setter-table
@@ -177,6 +212,7 @@
           (cons pair? pair-set!)
           (cons string? string-set!)
           (cons vector? vector-set!))
+    record-setters
     srfi-4-setters)))
 
 (define sparse-types
@@ -186,6 +222,7 @@
   (append
    (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
          port? procedure? string? symbol? vector?)
+   record-types
    srfi-4-types))
 
 (define (register-getter-with-setter! type getter sparse?)
@@ -195,48 +232,53 @@
   (when sparse?
     (push! sparse-types type)))
 
-(define-syntax define-record-type
-  (syntax-rules ()
-    ((_ <name> <constructor> <pred> <field> ...)
-     (begin
-       (%define-record-type <name> <constructor> <pred> <field> ...)
-       ;; Throw-away definition to not disturb an internal definitions sequence.
-       (define __throwaway
-         (begin
-          (register-getter-with-setter!
-           <pred>
-           (getter-with-setter (record-getter <field> ...)
-                               (record-setter <field> ...))
-           #f)
-          ;; Return the implementation's preferred "unspecified" value.
-          (if #f #f)))))))
+(cond-expand
+ ((not (or (library (srfi 99))
+           (library (rnrs records inspection))
+           (library (r6rs records inspection))))
+  (define-syntax define-record-type
+    (syntax-rules ()
+      ((_ <name> <constructor> <pred> <field> ...)
+       (begin
+         (%define-record-type <name> <constructor> <pred> <field> ...)
+         ;; Throw-away definition to not disturb an internal definitions
+         ;; sequence.
+         (define __throwaway
+           (begin
+             (register-getter-with-setter!
+              <pred>
+              (getter-with-setter (record-getter <field> ...)
+                                  (record-setter <field> ...))
+              #f)
+             ;; Return the implementation's preferred "unspecified" value.
+             (if #f #f)))))))
 
-(define-syntax record-getter
-  (syntax-rules ()
-    ((_ (<field> <getter> . <rest>) ...)
-     (let ((getters (alist->hashtable (list (cons '<field> <getter>) ...))))
-       (lambda (record field)
-         (let ((getter (or (ref getters field #f)
-                           (error "No such field of record." record field))))
-           (getter record)))))))
+  (define-syntax record-getter
+    (syntax-rules ()
+      ((_ (<field> <getter> . <rest>) ...)
+       (let ((getters (alist->hashtable (list (cons '<field> <getter>) ...))))
+         (lambda (record field)
+           (let ((getter (or (ref getters field #f)
+                             (error "No such field of record." record field))))
+             (getter record)))))))
 
-(define-syntax record-setter
-  (syntax-rules ()
-    ((_ . <rest>)
-     (%record-setter () . <rest>))))
+  (define-syntax record-setter
+    (syntax-rules ()
+      ((_ . <rest>)
+       (%record-setter () . <rest>))))
 
-(define-syntax %record-setter
-  (syntax-rules ()
-    ((_ <setters> (<field> <getter>) . <rest>)
-     (%record-setter <setters> . <rest>))
-    ((_ <setters> (<field> <getter> <setter>) . <rest>)
-     (%record-setter ((<field> <setter>) . <setters>) . <rest>))
-    ((_ ((<field> <setter>) ...))
-     (let ((setters (alist->hashtable (list (cons '<field> <setter>) ...))))
-       (lambda (record field value)
-         (let ((setter (or (ref setters field #f)
-                           (error "No such assignable field of record."
-                                  record field))))
-           (setter record value)))))))
+  (define-syntax %record-setter
+    (syntax-rules ()
+      ((_ <setters> (<field> <getter>) . <rest>)
+       (%record-setter <setters> . <rest>))
+      ((_ <setters> (<field> <getter> <setter>) . <rest>)
+       (%record-setter ((<field> <setter>) . <setters>) . <rest>))
+      ((_ ((<field> <setter>) ...))
+       (let ((setters (alist->hashtable (list (cons '<field> <setter>) ...))))
+         (lambda (record field value)
+           (let ((setter (or (ref setters field #f)
+                             (error "No such assignable field of record."
+                                    record field))))
+             (setter record value)))))))))
 
 ;;; generic-ref-set.body.scm ends here

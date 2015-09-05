@@ -28,14 +28,40 @@
           (srfi 64)
           (srfi 123))
   (cond-expand
+   ((library (srfi 99))
+    (import (srfi 99)))
+   ((library (rnrs records inspection))
+    (import (rnrs records syntactic))
+    (import (rnrs records procedural)))
+    (import (rnrs records inspection))
+   ((library (r6rs records inspection))
+    (import (r6rs records syntactic))
+    (import (r6rs records procedural)))
+    (import (r6rs records inspection))
+   (else))
+  (cond-expand
    ((library (srfi 4))
     (import (srfi 4)))
-   (else))
+   (else
+    (begin
+      ;; Stub to silence compilers.
+      (define s16vector #f))))
   (begin
 
     (define-record-type <foo> (make-foo a b) foo?
       (a foo-a set-foo-a!)
       (b foo-b))
+
+    ;; The SRFI-99 sample implementation contains a bug where immutable fields
+    ;; are nevertheless mutable through the procedural API.  Test whether we are
+    ;; on that implementation.
+    (cond-expand
+     ((library (srfi 99))
+      (define using-broken-srfi99
+        (guard (err (else #f))
+          (rtd-mutator <foo> 'b))))
+     (else
+      (define using-broken-srfi99 #f)))
 
     (define (run-tests)
       (let ((runner (test-runner-create)))
@@ -54,7 +80,9 @@
           (test-assert "string" (char=? #\b (ref "abc" 1)))
           (test-assert "vector" (= 1 (ref (vector 0 1 2) 1)))
           (test-assert "record" (= 1 (ref (make-foo 0 1) 'b)))
-          (test-skip (cond-expand ((library (srfi 4)) 0) (else 1)))
+          (cond-expand
+           ((library (srfi 4)) (values))
+           (else               (test-skip 1)))
           (test-assert "srfi-4" (= 1 (ref (s16vector 0 1 2) 1)))
           (test-end "ref")
 
@@ -82,9 +110,13 @@
           (test-assert "record" (let ((r (make-foo 0 1)))
                                   (set! (ref r 'a) 2)
                                   (= 2 (ref r 'a))))
+          (when using-broken-srfi99
+            (test-expect-fail 1))
           (test-assert "bad record assignment"
             (not (guard (err (else #f)) (set! (ref (make-foo 0 1) 'b) 2) #t)))
-          (test-skip (cond-expand ((library (srfi 4)) 0) (else 1)))
+          (cond-expand
+           ((library (srfi 4)) (values))
+           (else               (test-skip 1)))
           (test-assert "srfi-4" (let ((s16v (s16vector 0 1 2)))
                                   (set! (ref s16v 1) 3)
                                   (= 3 (ref s16v 1))))
