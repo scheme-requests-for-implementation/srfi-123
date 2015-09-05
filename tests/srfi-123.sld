@@ -52,6 +52,17 @@
       (a foo-a set-foo-a!)
       (b foo-b))
 
+    ;; The SRFI-99 sample implementation contains a bug where immutable fields
+    ;; are nevertheless mutable through the procedural API.  Test whether we are
+    ;; on that implementation.
+    (cond-expand
+     ((library (srfi 99))
+      (define using-broken-srfi99
+        (guard (err (else #f))
+          (rtd-mutator <foo> 'b))))
+     (else
+      (define using-broken-srfi99 #f)))
+
     (define (run-tests)
       (let ((runner (test-runner-create)))
         (parameterize ((test-runner-current runner))
@@ -99,6 +110,8 @@
           (test-assert "record" (let ((r (make-foo 0 1)))
                                   (set! (ref r 'a) 2)
                                   (= 2 (ref r 'a))))
+          (when using-broken-srfi99
+            (test-expect-fail 1))
           (test-assert "bad record assignment"
             (not (guard (err (else #f)) (set! (ref (make-foo 0 1) 'b) 2) #t)))
           (cond-expand
