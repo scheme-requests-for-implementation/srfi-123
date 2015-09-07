@@ -237,13 +237,18 @@
   (list hashtable?))
 
 (define type-list
+  ;; Although the whole SRFI intrinsically neglects performance, we still use
+  ;; the micro-optimization of ordering this list roughly according to most
+  ;; likely match.
   (append
-   (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
-         port? procedure? string? symbol? vector?)
+   (list hashtable? vector? pair? bytevector? string?)
    srfi-4-types
    box-types
-   ;; Place records last so specific record types (e.g. box) take precedence.
-   record-types))
+   ;; The record type must be placed last so specific record types (e.g. box)
+   ;; take precedence.
+   record-types
+   ;; Place those types we don't support really last.
+   (list boolean? char? eof-object? null? number? port? procedure? symbol?)))
 
 (define (register-getter-with-setter! type getter sparse?)
   (push! type-list type)
