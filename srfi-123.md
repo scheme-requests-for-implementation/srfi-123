@@ -91,9 +91,9 @@ type-specific accessor and modifier procedures in performance-critical
 sections of code.
 
 The operators are specified to work on bytevectors, R6RS hashtables,
-lists/pairs, strings, vectors, non-opaque record types, and SRFI-4
-vectors if present.  (R6RS and SRFI-99 can produce opaque record
-types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
+lists/pairs, strings, vectors, non-opaque record types, SRFI-4
+vectors, and SRFI-111 boxes.  (R6RS and SRFI-99 can produce opaque
+record types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
 
 - For bytevectors, 8-bit unsigned integer operations are assumed.
   There is no obvious way to incorporate other bytevector operations
@@ -142,6 +142,14 @@ types; SRFI-9 and R7RS cannot.)  Some notes on specific types:
     (define foo (make-foo 0 1))
     (ref foo 'a)  ;=> 0
     (set! (~ foo 'b) 2)  ;error: No such assignable field of record.
+    ```
+
+- For boxes, the symbol `*` is used to indicate the one value field of
+  the box.  This is mainly useful for `ref*`:
+
+    ```
+    (define struct (list 0 (vector (box (cons 'a 'b)))))
+    (ref* struct 1 0 '* 'cdr)
     ```
 
 Alists are difficult to support due to the lack of a reliable `alist?`
@@ -207,8 +215,8 @@ argument is an error.
     (ref '(0 1 2) 3 'default)  ;error: list-ref: Too many arguments.
 
 Valid types for `object` are: bytevectors, hashtables, pairs, strings,
-vectors, non-opaque record types, and SRFI-4 vectors if present.  Only
-hashtables are a sparse type.  Implementations are encouraged to
+vectors, non-opaque record types, SRFI-4 vectors, and SRFI-111 boxes.
+Only hashtables are a sparse type.  Implementations are encouraged to
 expand this list of types with any further types they support.
 
 Valid types for `field` depend on the type of `object`.  For
@@ -216,11 +224,16 @@ bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer
 to their respective `*-ref` procedures.  For pairs, the symbols `car`
 and `cdr` are accepted, as well as non-negative integers as with
 `list-ref`.  For records, symbols that correspond with the record
-type's field names are allowed.
+type's field names are allowed.  For boxes, the symbol `*` is used to
+denote the one value field of the box.
 
 A conforming implementation must be prepared for SRFI-4 vector types
 and bytevectors not being disjoint types, and treat SRFI-4 vectors
 suitably and not as regular bytevectors.
+
+A conforming implementation must also be prepared for boxes being a
+non-opaque record type instead of a disjoint type, and treat them
+correctly despite that fact.
 
 The `ref` procedure has an associated SRFI-17 setter, although the one
 of `ref*` is strictly more powerful.

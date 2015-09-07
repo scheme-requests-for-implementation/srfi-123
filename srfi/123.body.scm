@@ -134,6 +134,22 @@
   (define bytevector-ref bytevector-u8-ref)
   (define bytevector-set! bytevector-u8-set!)))
 
+;;; SRFI-111 boxes support
+
+(cond-expand
+ ((library (srfi 111))
+  (define (box-ref box _field)
+    (unbox box))
+  (define (box-set! box _field value)
+    (set-box! box value))
+  (define box-getters (list (cons box? box-ref)))
+  (define box-setters (list (cons box? box-set!)))
+  (define box-types (list box?)))
+ (else
+  (define box-getters '())
+  (define box-setters '())
+  (define box-types '())))
+
 ;;; Main
 
 (define %ref
@@ -202,7 +218,8 @@
           (cons string? string-ref)
           (cons vector? vector-ref))
     record-getters
-    srfi-4-getters)))
+    srfi-4-getters
+    box-getters)))
 
 (define setter-table
   (alist->hashtable
@@ -213,7 +230,8 @@
           (cons string? string-set!)
           (cons vector? vector-set!))
     record-setters
-    srfi-4-setters)))
+    srfi-4-setters
+    box-setters)))
 
 (define sparse-types
   (list hashtable?))
@@ -222,8 +240,10 @@
   (append
    (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
          port? procedure? string? symbol? vector?)
-   record-types
-   srfi-4-types))
+   srfi-4-types
+   box-types
+   ;; Place records last so specific record types (e.g. box) take precedence.
+   record-types))
 
 (define (register-getter-with-setter! type getter sparse?)
   (push! type-list type)

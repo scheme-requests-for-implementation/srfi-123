@@ -50,7 +50,7 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 (define lst (list 0 1 table 3))
 (ref* lst 2 &quot;foo&quot; &#39;x)  ;error while accessing &quot;foo&quot; from table</code></pre>
 <p>We believe the overhead involved in the dynamic dispatch is negligible in most cases, and furthermore a programmer can always fall back to type-specific accessor and modifier procedures in performance-critical sections of code.</p>
-<p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
+<p>The operators are specified to work on bytevectors, R6RS hashtables, lists/pairs, strings, vectors, non-opaque record types, SRFI-4 vectors, and SRFI-111 boxes. (R6RS and SRFI-99 can produce opaque record types; SRFI-9 and R7RS cannot.) Some notes on specific types:</p>
 <ul>
 <li><p>For bytevectors, 8-bit unsigned integer operations are assumed. There is no obvious way to incorporate other bytevector operations into the generalized API, and a programmer is most likely to have single-byte operations in mind when using a generalized API on bytevectors.</p>
 <pre><code>(define bv (bytevector 0 1 2 3))
@@ -72,6 +72,9 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 (define foo (make-foo 0 1))
 (ref foo &#39;a)  ;=&gt; 0
 (set! (~ foo &#39;b) 2)  ;error: No such assignable field of record.</code></pre></li>
+<li><p>For boxes, the symbol <code>*</code> is used to indicate the one value field of the box. This is mainly useful for <code>ref*</code>:</p>
+<pre><code>(define struct (list 0 (vector (box (cons &#39;a &#39;b)))))
+(ref* struct 1 0 &#39;* &#39;cdr)</code></pre></li>
 </ul>
 <p>Alists are difficult to support due to the lack of a reliable <code>alist?</code> predicate. (It's ambiguous in that every alist is also a list, and any list may coincidentally have the structure of an alist.) It was considered to support non-integer keyed alists as a special case, but this would lead to silent code breakage when a programmer forgot about the API inconsistency and exchanged a non-integer key for an integer key in existing code. It was also considered to drop list support in favor of alist support, but that idea discarded as well because the hypothetical <code>alist-set!</code> is an exceedingly rare operation. (Prepending an entry to the front, possibly hiding another entry with the same key, is more common.)</p>
 <h2 id="integration-with-srfi-105">Integration with SRFI-105</h2>
@@ -96,9 +99,10 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 (ref hashtable unassigned-key)  ;error</code></pre>
 <p>If <code>object</code> is not of a sparse type, then providing the <code>default</code> argument is an error.</p>
 <pre><code>(ref &#39;(0 1 2) 3 &#39;default)  ;error: list-ref: Too many arguments.</code></pre>
-<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, non-opaque record types, and SRFI-4 vectors if present. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
-<p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, the symbols <code>car</code> and <code>cdr</code> are accepted, as well as non-negative integers as with <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed.</p>
+<p>Valid types for <code>object</code> are: bytevectors, hashtables, pairs, strings, vectors, non-opaque record types, SRFI-4 vectors, and SRFI-111 boxes. Only hashtables are a sparse type. Implementations are encouraged to expand this list of types with any further types they support.</p>
+<p>Valid types for <code>field</code> depend on the type of <code>object</code>. For bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer to their respective <code>*-ref</code> procedures. For pairs, the symbols <code>car</code> and <code>cdr</code> are accepted, as well as non-negative integers as with <code>list-ref</code>. For records, symbols that correspond with the record type's field names are allowed. For boxes, the symbol <code>*</code> is used to denote the one value field of the box.</p>
 <p>A conforming implementation must be prepared for SRFI-4 vector types and bytevectors not being disjoint types, and treat SRFI-4 vectors suitably and not as regular bytevectors.</p>
+<p>A conforming implementation must also be prepared for boxes being a non-opaque record type instead of a disjoint type, and treat them correctly despite that fact.</p>
 <p>The <code>ref</code> procedure has an associated SRFI-17 setter, although the one of <code>ref*</code> is strictly more powerful.</p>
 <pre><code>(define vec (vector 0 1 2))
 (set! (ref vec 0) 3)
