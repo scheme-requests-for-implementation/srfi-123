@@ -72,16 +72,16 @@
     (let* ((rtd (record-rtd record))
            (mutator (rtd-mutator rtd field)))
       (mutator record value)))
-  (define record-getters
+  (define record-getter
     (list (cons record? record-ref)))
-  (define record-setters
+  (define record-setter
     (list (cons record? record-set!)))
-  (define record-types
+  (define record-type
     (list record?)))
  (else
-  (define record-getters '())
-  (define record-setters '())
-  (define record-types '())))
+  (define record-getter '())
+  (define record-setter '())
+  (define record-type '())))
 
 ;;; SRFI-4 support
 
@@ -142,13 +142,13 @@
     (unbox box))
   (define (box-set! box _field value)
     (set-box! box value))
-  (define box-getters (list (cons box? box-ref)))
-  (define box-setters (list (cons box? box-set!)))
-  (define box-types (list box?)))
+  (define box-getter (list (cons box? box-ref)))
+  (define box-setter (list (cons box? box-set!)))
+  (define box-type (list box?)))
  (else
-  (define box-getters '())
-  (define box-setters '())
-  (define box-types '())))
+  (define box-getter '())
+  (define box-setter '())
+  (define box-type '())))
 
 ;;; Main
 
@@ -217,9 +217,9 @@
           (cons pair? pair-ref)
           (cons string? string-ref)
           (cons vector? vector-ref))
-    record-getters
+    record-getter
     srfi-4-getters
-    box-getters)))
+    box-getter)))
 
 (define setter-table
   (alist->hashtable
@@ -229,9 +229,9 @@
           (cons pair? pair-set!)
           (cons string? string-set!)
           (cons vector? vector-set!))
-    record-setters
+    record-setter
     srfi-4-setters
-    box-setters)))
+    box-setter)))
 
 (define sparse-types
   (list hashtable?))
@@ -243,10 +243,10 @@
   (append
    (list hashtable? vector? pair? bytevector? string?)
    srfi-4-types
-   box-types
+   box-type
    ;; The record type must be placed last so specific record types (e.g. box)
    ;; take precedence.
-   record-types
+   record-type
    ;; Place those types we don't support really last.
    (list boolean? char? eof-object? null? number? port? procedure? symbol?)))
 
