@@ -213,7 +213,8 @@ expand this list of types with any further types they support.
 
 Valid types for `field` depend on the type of `object`.  For
 bytevectors, hashtables, strings, vectors, and SRFI-4 vectors, refer
-to their respective `*-ref` procedures.  For pairs, refer to
+to their respective `*-ref` procedures.  For pairs, the symbols `car`
+and `cdr` are accepted, as well as non-negative integers as with
 `list-ref`.  For records, symbols that correspond with the record
 type's field names are allowed.
 
