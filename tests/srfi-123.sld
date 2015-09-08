@@ -46,6 +46,13 @@
     (begin
       ;; Stub to silence compilers.
       (define s16vector #f))))
+  (cond-expand
+   ((library (srfi 111))
+    (import (srfi 111)))
+   (else
+    (begin
+      ;; Stub to silence compilers.
+      (define box #f))))
   (begin
 
     (define-record-type <foo> (make-foo a b) foo?
@@ -84,6 +91,10 @@
            ((library (srfi 4)) (values))
            (else               (test-skip 1)))
           (test-assert "srfi-4" (= 1 (ref (s16vector 0 1 2) 1)))
+          (cond-expand
+           ((library (srfi 111)) (values))
+           (else                 (test-skip 1)))
+          (test-assert "srfi-111" (= 1 (ref (box 1) '*)))
           (test-end "ref")
 
           (test-assert "ref*" (= 1 (ref* '(_ #(_ (0 . 1) _) _) 1 1 'cdr)))
@@ -120,6 +131,12 @@
           (test-assert "srfi-4" (let ((s16v (s16vector 0 1 2)))
                                   (set! (ref s16v 1) 3)
                                   (= 3 (ref s16v 1))))
+          (cond-expand
+           ((library (srfi 111)) (values))
+           (else                 (test-skip 1)))
+          (test-assert "srfi-111" (let ((b (box 0)))
+                                    (set! (ref b '*) 1)
+                                    (= 1 (ref b '*))))
           (test-end "ref setter")
 
           (test-assert "ref* setter"

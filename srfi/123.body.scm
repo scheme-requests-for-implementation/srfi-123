@@ -72,16 +72,16 @@
     (let* ((rtd (record-rtd record))
            (mutator (rtd-mutator rtd field)))
       (mutator record value)))
-  (define record-getters
+  (define record-getter
     (list (cons record? record-ref)))
-  (define record-setters
+  (define record-setter
     (list (cons record? record-set!)))
-  (define record-types
+  (define record-type
     (list record?)))
  (else
-  (define record-getters '())
-  (define record-setters '())
-  (define record-types '())))
+  (define record-getter '())
+  (define record-setter '())
+  (define record-type '())))
 
 ;;; SRFI-4 support
 
@@ -133,6 +133,22 @@
   (define srfi-4-types '())
   (define bytevector-ref bytevector-u8-ref)
   (define bytevector-set! bytevector-u8-set!)))
+
+;;; SRFI-111 boxes support
+
+(cond-expand
+ ((library (srfi 111))
+  (define (box-ref box _field)
+    (unbox box))
+  (define (box-set! box _field value)
+    (set-box! box value))
+  (define box-getter (list (cons box? box-ref)))
+  (define box-setter (list (cons box? box-set!)))
+  (define box-type (list box?)))
+ (else
+  (define box-getter '())
+  (define box-setter '())
+  (define box-type '())))
 
 ;;; Main
 
@@ -201,8 +217,9 @@
           (cons pair? pair-ref)
           (cons string? string-ref)
           (cons vector? vector-ref))
-    record-getters
-    srfi-4-getters)))
+    record-getter
+    srfi-4-getters
+    box-getter)))
 
 (define setter-table
   (alist->hashtable
@@ -212,18 +229,26 @@
           (cons pair? pair-set!)
           (cons string? string-set!)
           (cons vector? vector-set!))
-    record-setters
-    srfi-4-setters)))
+    record-setter
+    srfi-4-setters
+    box-setter)))
 
 (define sparse-types
   (list hashtable?))
 
 (define type-list
+  ;; Although the whole SRFI intrinsically neglects performance, we still use
+  ;; the micro-optimization of ordering this list roughly according to most
+  ;; likely match.
   (append
-   (list boolean? bytevector? char? eof-object? hashtable? null? number? pair?
-         port? procedure? string? symbol? vector?)
-   record-types
-   srfi-4-types))
+   (list hashtable? vector? pair? bytevector? string?)
+   srfi-4-types
+   box-type
+   ;; The record type must be placed last so specific record types (e.g. box)
+   ;; take precedence.
+   record-type
+   ;; Place those types we don't support really last.
+   (list boolean? char? eof-object? null? number? port? procedure? symbol?)))
 
 (define (register-getter-with-setter! type getter sparse?)
   (push! type-list type)

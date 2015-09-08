@@ -32,4 +32,8 @@
    ((library (srfi 4))
     (import (srfi 4)))
    (else))
+  (cond-expand
+   ((library (srfi 111))
+    (import (srfi 111)))
+   (else))
   (include "123.body.scm"))
