@@ -1,5 +1,4 @@
-Generic accessor and modifier operators
-=======================================
+% Generic accessor and modifier operators
 
 Author
 ------
