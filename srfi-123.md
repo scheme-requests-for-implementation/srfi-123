@@ -9,9 +9,11 @@ Taylan Ulrich Bayırlı/Kammer, taylanbayirli at Google Mail
 Status
 ------
 
-This SRFI is currently in <em>draft</em> status.  Here is
+This SRFI is currently in *final* status.  Here is
 [an explanation](http://srfi.schemers.org/srfi-process.html) of each
-status that a SRFI can hold.  To provide input on this SRFI, please
+status that a SRFI can hold.
+
+To provide input on this SRFI, please
 send email to <code><a href="mailto:srfi minus 123 at srfi dot
 schemers dot org">srfi-123@<span
 class="antispam">nospam</span>srfi.schemers.org</a></code>.  To
@@ -30,6 +32,7 @@ You can access previous messages via the mailing list
   - Draft #7 published: 2015/8/26
   - Draft #8 published: 2015/9/5
   - Draft #9 published: 2015/9/7
+  - Finalized: 2015/10/4
 
 
 Abstract
