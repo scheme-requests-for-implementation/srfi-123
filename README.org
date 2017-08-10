@@ -2,46 +2,15 @@
 
 ** by Taylan Ulrich Bayırlı/Kammer
 
-This repository hosts [[http://srfi.schemers.org/srfi-123/][SRFI 123]]: Generic accessor and modifier operators, a [[http://srfi.schemers.org/][Scheme Request for Implementation]].
+This repository hosts [[https://srfi.schemers.org/srfi-123/][SRFI 123]]: Generic accessor and modifier operators, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
 This SRFI is in /final/ status.
 
-The full documentation for this SRFI can be found in the [[http://srfi.schemers.org/srfi-123/srfi-123.html][SRFI Document]].
+The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-123/srfi-123.html][SRFI Document]].
 
-If you'd like to participate in the discussion of this SRFI, or report issues with it, please [[http://srfi.schemers.org/srfi-123/][join the SRFI-123 mailing list]] and send your message there.
+If you'd like to participate in the discussion of this SRFI, or report issues with it, please [[shttp://srfi.schemers.org/srfi-123/][join the SRFI-123 mailing list]] and send your message there.
 
 Thank you.
 
 
 [[mailto:srfi-editors@srfi.schemers.org][The SRFI Editors]]
-
-* How to run the test suite
-
-** Chibi
-
--  Install Chibi Scheme.
-
--  Clone [[https://github.com/larcenists/larceny]].
-
--  Enter the directory of this repository and run:
-
-   #+BEGIN_EXAMPLE
-       chibi -A . \
-             -A "$larceny_sources"/tools/R6RS \
-             run-tests.scm
-   #+END_EXAMPLE
-
-and it will print the results as well as indicate via process exit
-status whether the suite passed.
-
-** Larceny
-
--  Install Larceny, including the =tools/R6RS/=.
-
--  Enter the directory of this repository and run:
-
-   #+BEGIN_EXAMPLE
-       larceny -path .:"$larceny_sources"/tools/R6RS \
-               -r7rs \
-               -program run-tests.scm
-   #+END_EXAMPLE
