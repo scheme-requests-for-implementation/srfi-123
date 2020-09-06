@@ -1,38 +1,46 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Generic accessor and modifier operators</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/srfi.css" type="text/css" />
-  <style type="text/css">code{white-space: pre;}</style>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="http://srfi.schemers.org/srfi.css" />
 </head>
 <body>
-<div id="header">
+<header id="title-block-header">
 <h1 class="title">Generic accessor and modifier operators</h1>
-</div>
+</header>
 <h2 id="author">Author</h2>
 <p>Taylan Ulrich Bayırlı/Kammer, taylanbayirli at Google Mail</p>
 <h2 id="status">Status</h2>
-
-<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+123+at+srfi+dotschemers+dot+org">srfi-123@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-123">archive</a>.</p>
+<p>This SRFI is currently in <em>final</em> status. Here is <a href="http://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.</p>
+<p>To provide input on this SRFI, please send email to <code><a href="mailto:srfi minus 123 at srfi dot
+schemers dot org">srfi-123@<span
+class="antispam">nospam</span>srfi.schemers.org</a></code>. To subscribe to the list, follow <a href="http://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>. You can access previous messages via the mailing list <a href="http://srfi-email.schemers.org/srfi-123">archive</a>.</p>
 <ul>
-<li>Received: 2015-08-14</li>
-<li>Draft #1 published: 2015-08-15</li>
-<li>Draft #2 published: 2015-08-16</li>
-<li>Draft #3 published: 2015-08-17</li>
-<li>Draft #4 published: 2015-08-18</li>
-<li>Draft #5 published: 2015-08-23 (code changes only)</li>
-<li>Draft #6 published: 2015-08-24</li>
-<li>Draft #7 published: 2015-08-26</li>
-<li>Draft #8 published: 2015-09-05</li>
-<li>Draft #9 published: 2015-09-07</li>
-<li>Finalized: 2015-10-04</li>
+<li>Received: 2015/8/14</li>
+<li>Draft #1 published: 2015/8/15</li>
+<li>Draft #2 published: 2015/8/16</li>
+<li>Draft #3 published: 2015/8/17</li>
+<li>Draft #4 published: 2015/8/18</li>
+<li>Draft #5 published: 2015/8/23 (code changes only)</li>
+<li>Draft #6 published: 2015/8/24</li>
+<li>Draft #7 published: 2015/8/26</li>
+<li>Draft #8 published: 2015/9/5</li>
+<li>Draft #9 published: 2015/9/7</li>
+<li>Finalized: 2015/10/4</li>
 </ul>
 <h2 id="abstract">Abstract</h2>
-<p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary &quot;collection&quot; objects. We fill this gap for Scheme by defining generalized accessors, and an associated SRFI-17 setter.</p>
+<p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary "collection" objects. We fill this gap for Scheme by defining generalized accessors, and an associated SRFI-17 setter.</p>
 <h2 id="rationale">Rationale</h2>
 <p>In some types of code-bases, accessing and modifying fields of certain collection objects (such as vectors, hashtables, or records) are ubiquitous operations. Standard Scheme APIs contain verbose procedure names specialized for each data type, which may become very tedious to type, and clutter the code.</p>
 <p>In contrast, most other languages offer very short and simple syntax for such operations, such as square bracket and dotted notation: <code>object[field]</code> and <code>object.field</code> for access; <code>object[field] = value</code> and <code>object.field = value</code> for modification.</p>
@@ -43,7 +51,7 @@
 <pre><code>(define struct #(a (x y #u8(1 2 3)) c))
 (set! (~ struct 1 2 0) 4)
 struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
-<p>Plain <code>ref</code>, instead of allowing chaining, takes an optional &quot;default&quot; argument for objects such as hashtables.</p>
+<p>Plain <code>ref</code>, instead of allowing chaining, takes an optional "default" argument for objects such as hashtables.</p>
 <pre><code>(define table (make-eqv-hashtable))
 (ref table &quot;foo&quot; &#39;not-found)  ;=&gt; not-found
 (set! (~ table &quot;foo&quot;) &quot;Foobar.&quot;)
@@ -97,7 +105,7 @@ struct  ;=&gt; #(a (x y #u8(4 2 3)) c)</code></pre>
 </ul>
 <p>Returns the value for <code>field</code> in <code>object</code>. It is an error if <code>object</code> has no field identified by <code>field</code>.</p>
 <pre><code>(ref #(0 1 2) 3)  ;error: vector-ref: Index out of bounds.</code></pre>
-<p>If <code>object</code> is of a &quot;sparse&quot; type, meaning its fields can be &quot;empty&quot; or &quot;unassigned&quot; (e.g. a hashtable), and the requested field is empty, then the value of <code>default</code> is returned. It is an error if the <code>default</code> argument is not provided in this case.</p>
+<p>If <code>object</code> is of a "sparse" type, meaning its fields can be "empty" or "unassigned" (e.g. a hashtable), and the requested field is empty, then the value of <code>default</code> is returned. It is an error if the <code>default</code> argument is not provided in this case.</p>
 <pre><code>(ref hashtable unassigned-key &#39;default)  ;=&gt; default
 (ref hashtable unassigned-key)  ;error</code></pre>
 <p>If <code>object</code> is not of a sparse type, then providing the <code>default</code> argument is an error.</p>
@@ -145,10 +153,8 @@ vec  ;=&gt; #(3 1 2)</code></pre>
 <p>Thanks also to everyone else on the discussion mailing list for their input.</p>
 <h2 id="copyright-and-license">Copyright and license</h2>
 <p>Copyright (C) Taylan Ulrich Bayırlı/Kammer (2015). All Rights Reserved.</p>
-<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
 <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
-<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
-  <hr>
-  <address>Editor: <a href="mailto:srfi-editors+at+srfi+dot+schemers+dot+org">Arthur A. Gleckler</a></address>
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
 </body>
 </html>
