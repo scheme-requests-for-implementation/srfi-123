@@ -29,6 +29,9 @@
 <li>Draft #8 published: 2015-09-05</li>
 <li>Draft #9 published: 2015-09-07</li>
 <li>Finalized: 2015-10-04</li>
+<li>Revised to fix errata:
+      <ul>
+        <li>2021-04-08 (Fix <a href="#register-getter-with-setter-bang">description</a> of <code>register-getter-with-setter!</code>.)</li></ul></li>
 </ul>
 <h2 id="abstract">Abstract</h2>
 <p>Lisp dialects including Scheme have traditionally lacked short, simple, generic syntax for accessing and modifying the fields of arbitrary &quot;collection&quot; objects. We fill this gap for Scheme by defining generalized accessors, and an associated SRFI-17 setter.</p>
@@ -122,10 +125,18 @@ vec  ;=&gt; #(3 1 2)</code></pre>
 <pre><code>(define (store-item! field-chain value)
   (apply (setter ref*) the-store (append field-chain (list value))))</code></pre>
 <ul>
-<li><code>(register-getter-with-setter! type getter sparse?)</code> (procedure)</li>
+<li id="register-getter-with-setter-bang"><code>(register-getter-with-setter! type getter sparse?)</code> (procedure)</li>
 </ul>
 <p>Registers a new type/getter/setter triple for the dynamic dispatch. <code>Type</code> is a type predicate, <code>getter</code> is a procedure that has a setter associated with it, and <code>sparse?</code> is a Boolean indicating whether the type is a sparse type (see <code>ref</code> specification).</p>
-<p>The getter will be called with two arguments: the object whose field should be accessed, and an object identifying the field to be accessed. The setter will be called with one additional argument which is the value to be assigned to the given field of the given object.</p>
+<p>If <code>sparse?</code> is false, the getter will be called with
+two arguments: the object whose field should be accessed, and an
+object identifying the field to be accessed.  If <code>sparse?</code>
+is true, the getter will be called with a third argument, the default
+value, which the getter must return in case the given object has no
+value associated with the given field.</p>
+<p>The setter will always be called with three arguments: the object that
+is to be mutated, an object identifying which field of the object is to
+be mutated, and the new value that is to be assigned to that field.</p>
 <p><strong>Warning:</strong> This procedure is strictly meant for when defining a new disjoint type which isn't already handled by <code>ref</code>. In practice, this means it should only be used with newly defined opaque record types, or types defined with some implementation-specific method which, unlike <code>define-record-type</code>, doesn't automatically register a getter and setter for the type. If any two type predicates registered with the system both return true for any Scheme object, the behavior is undefined. (A custom getter or setter may, however, dispatch to different actions based on some property of the given object, based on the <code>field</code> argument, or based on anything else.)</p>
 <p>It is conceivable that this method will become deprecated after a system has been invented which ties together the definition of a new opaque record type with the definitions of its getter and setter. This is considered outside the scope of this SRFI.</p>
 <h2 id="considerations-when-using-as-a-library">Considerations when using as a library</h2>
